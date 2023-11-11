@@ -1,1 +1,8 @@
 # Computer-Network
+
+<h2>Cách compile:</h2>
+Dùng Visual Studio, vào <strong>Tools->Nuget Package Manager->Package Manager Consol</strong>e và gõ các lệnh dưới đây:
+<ul>
+  <li><code>install-package sdl2</code></li>
+  <li><code>install-package opencv4.2</code></li>
+</ul>
