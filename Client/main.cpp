@@ -114,12 +114,6 @@ int main(int argc, char** argv) {
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
-        /*cv::imshow("Display frame", decompressedImage);
-
-        if (cv::waitKey(1) == 27) {
-            break;
-        }*/
-
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start);
         cout << "FPS: " << (double)1 / duration.count() * 1000000 << endl;
