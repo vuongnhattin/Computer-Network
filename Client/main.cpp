@@ -30,7 +30,6 @@ void initSocket(SOCKET& s) {
 
 	s = INVALID_SOCKET;
 	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	//s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s == INVALID_SOCKET) {
 		printf("Error at socket()!\n");
 		WSACleanup();
@@ -114,10 +113,17 @@ int main(int argc, char** argv) {
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
+        SDL_DestroyTexture(texture);
+        SDL_FreeSurface(surface);
+
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start);
         cout << "FPS: " << (double)1 / duration.count() * 1000000 << endl;
     }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     closesocket(s);
     WSACleanup();
