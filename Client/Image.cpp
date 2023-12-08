@@ -10,16 +10,13 @@
 using namespace std::chrono;
 
 cv::Mat receiveImage(SOCKET clientSocket) {
-	auto start = high_resolution_clock::now();
 	int size;
 	int byteReceived = recv(clientSocket, (char*)&size, sizeof(int), 0);
     if (byteReceived < 0) {
 		std::cout << "Error at recv()!\n";
 		return cv::Mat();
 	}
-    else {
-		std::cout << "Received size: " << size << std::endl;
-	}
+	
 	std::vector<char> buffer(size);
 	int totalByteReceived = 0;
     while (totalByteReceived < size) {
@@ -34,17 +31,7 @@ cv::Mat receiveImage(SOCKET clientSocket) {
 	if (quit) send(clientSocket, "NO", 2, 0);
 	else send(clientSocket, "OK", 2, 0);
 
-	auto start2 = high_resolution_clock::now();
-
 	cv::Mat decompressedImage = cv::imdecode(cv::Mat(buffer), cv::IMREAD_COLOR);
-
-	auto stop2 = high_resolution_clock::now();
-	auto duration2 = duration_cast<milliseconds>(stop2 - start2);
-	std::cout << "Decompress time: " << duration2.count() << " ms\n";
-
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "FPS: " << (double)1 / duration.count() * 1000000 << std::endl;
 
 	return decompressedImage;
 }

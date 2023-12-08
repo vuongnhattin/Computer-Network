@@ -6,7 +6,7 @@
 
 #define PORT 55555
 
-bool initSocket(SOCKET& clientSocket, char* ip, const int port) {
+bool initClientSocket(SOCKET& clientSocket, char* ip, const int port) {
 	WSAData data;
 	if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
 		std::cout << "WSAStartup fail!\n";
@@ -47,4 +47,14 @@ bool initSocket(SOCKET& clientSocket, char* ip, const int port) {
 	}
 
 	return true;
+}
+
+void getScreenResolution() {
+	char buffer[10];
+
+	recv(imageSocket, buffer, 10, 0);
+	screenWidth = atoi(buffer);
+
+	recv(imageSocket, buffer, 10, 0);
+	screenHeight = atoi(buffer);
 }

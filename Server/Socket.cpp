@@ -2,6 +2,7 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <WS2tcpip.h>
+#include <string>
 
 #define PORT 55555
 
@@ -77,4 +78,12 @@ bool listenSocket(SOCKET& serverSocket, SOCKET& acceptSocket) {
 
 bool initSocket(SOCKET& serverSocket, SOCKET& acceptSocket, const char* ip, const int port) {
     return (bindSocket(serverSocket, ip, port) && listenSocket(serverSocket, acceptSocket));
+}
+
+void sendScreenResolution(SOCKET acceptSocket, int width, int height) {
+    std::string widthStr = std::to_string(width);
+    std::string heightStr = std::to_string(height);
+
+	send(acceptSocket, widthStr.c_str(), widthStr.size(), 0);
+    send(acceptSocket, heightStr.c_str(), heightStr.size(), 0);
 }
