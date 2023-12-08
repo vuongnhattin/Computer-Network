@@ -6,180 +6,138 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
+#include "Image.h"
+#include "Socket.h"
+#include <SDL.h>
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+#include <thread>
+#include "main.h"
 #pragma comment(lib, "ws2_32.lib")
 
-using std::cout; using std::cin; using std::endl; using std::vector;
 using namespace std::chrono;
 
-#define PORT 55555
-#define DEPTH 4
+const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-struct HeaderScreenshot {
-    HDC screenDC, memDC;
-    HBITMAP bitmap;
-    BITMAPINFOHEADER bi;
-};
-
-void initHeaderScreenshot(HeaderScreenshot& header) {
-    header.screenDC = GetDC(NULL);
-    header.memDC = CreateCompatibleDC(header.screenDC);
-    header.bitmap = CreateCompatibleBitmap(header.screenDC, screenWidth, screenHeight);
-    SelectObject(header.memDC, header.bitmap);
-
-    header.bi.biSize = sizeof(BITMAPINFOHEADER);
-    header.bi.biWidth = screenWidth;
-    header.bi.biHeight = -screenHeight;
-    header.bi.biPlanes = 1;
-    header.bi.biBitCount = 8 * DEPTH;
-    header.bi.biCompression = 0;
-    header.bi.biSizeImage = 0;
-    header.bi.biXPelsPerMeter = 0;
-    header.bi.biYPelsPerMeter = 0;
-    header.bi.biClrUsed = 0;
-    header.bi.biClrImportant = 0;
-    BitBlt(header.memDC, 0, 0, screenWidth, screenHeight, header.screenDC, 0, 0, SRCCOPY);
-}
-
-void capture(HeaderScreenshot& header, BYTE* pixels) {
-
-    GetDIBits(header.memDC, header.bitmap, 0, screenHeight, pixels, (BITMAPINFO*)&header.bi, DIB_RGB_COLORS);
-}
-
-cv::Mat capture(HeaderScreenshot& header) {
-    cv::Mat frame(screenHeight, screenWidth, CV_8UC4);
-    BitBlt(header.memDC, 0, 0, screenWidth, screenHeight, header.screenDC, 0, 0, SRCCOPY);
-    GetDIBits(header.memDC, header.bitmap, 0, screenHeight, frame.data, (BITMAPINFO*)&header.bi, DIB_RGB_COLORS);
-
-    return frame;
-}
-
-vector<uchar> compressImage(cv::Mat image, int quality) {
-    vector<uchar> buffer;
-    vector<int> compression_params;
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(quality);
-
-    cv::imencode(".jpg", image, buffer, compression_params);
-    return buffer;
-}
-
-void freeHeaderScreenshot(HeaderScreenshot& header) {
-    DeleteObject(header.bitmap);
-    DeleteDC(header.memDC);
-    ReleaseDC(NULL, header.screenDC);
-}
-
-void initSocket(SOCKET& s, SOCKET& acceptSocket) {
-    // Initialize
-    WSAData data;
-    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-        printf("WSAStartup fail!\n");
-        exit(-1);
-    }
-    else {
-        printf("WSAStartup ok!\n");
-    }
-
-    // Create socket
-    s = INVALID_SOCKET;
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (s == INVALID_SOCKET) {
-        printf("Error at socket()!\n");
-        WSACleanup();
-        exit(-1);
-    }
-    else {
-        printf("socket() is ok!\n");
-    }
-
-    char ipv4[80];
-    printf("Nhap dia chi IP: ");
-    cin >> ipv4;
-
-    // Bind
-    sockaddr_in service;
-    service.sin_family = AF_INET;
-    inet_pton(AF_INET, (const char*)ipv4, &service.sin_addr.s_addr);
-    service.sin_port = htons((u_short)PORT);
-
-    if (bind(s, (sockaddr*)&service, sizeof(service)) == SOCKET_ERROR) {
-        cout << "bind() faild!\n";
-        closesocket(s);
-        WSACleanup();
-        exit(-1);
-    }
-    else {
-        printf("bind() is ok!\n");
-    }
-    printf("IPv4: %s\n", ipv4);
-
-    // Listen
-    if (listen(s, 1) == SOCKET_ERROR) {
-        cout << "error at listen()\n";
-        WSACleanup();
-        exit(-1);
-    }
-    else {
-        cout << "listen() ok!\n";
-    }
-
-    // Accept
-    acceptSocket = accept(s, NULL, NULL);
-    if (acceptSocket == INVALID_SOCKET) {
-        cout << "failed at accept()\n";
-        WSACleanup();
-        exit(-1);
-    }
-    else {
-        cout << "listening...\n";
-    }
-}
+bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false;
+char ip[16] = "";
+SOCKET serverSocket, acceptServerSocket;
+SOCKET mouseSocket, acceptMouseSocket;
 
 int main(int argc, char** agrv) {
-    SOCKET s, acceptSocket;
-    initSocket(s, acceptSocket);
+    double scale = 0.8;
+    int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
 
     HeaderScreenshot header;
     initHeaderScreenshot(header);
+    char buff[3];
 
-    while (1) {
-        auto start = high_resolution_clock::now();
-        cv::Mat frame = capture(header);
-        cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
-        auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(stop - start);
-        cout << "capture() took: " << duration.count() << "ms\n";
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* window = SDL_CreateWindow("Server", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, appWidth, appHeight, SDL_WINDOW_SHOWN);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-        start = high_resolution_clock::now();
-        vector<uchar> compressed = compressImage(frame, 80);
-        stop = high_resolution_clock::now();
-        duration = duration_cast<milliseconds>(stop - start);
-        cout << "compress() took: " << duration.count() << "ms\n";
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.Fonts->AddFontFromFileTTF("OpenSans-Regular.ttf", 24);
+    ImGui::StyleColorsDark();
+    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer2_Init(renderer);
 
-        int size = compressed.size();
-        int byteSent = send(acceptSocket, (char*)&size, sizeof(int), 0);
-        if (byteSent < 0) {
-            int error = WSAGetLastError();
-            cout << "Could not send size! Error code: " << error << endl;
-            WSACleanup();
-            break;
+    SDL_Event event;
+
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                quit = 1;
+            }
+            ImGui_ImplSDL2_ProcessEvent(&event);
         }
-        cout << "Sent: " << byteSent << " bytes\n";
-        byteSent = send(acceptSocket, (char*)&compressed[0], compressed.size(), 0);
-        if (byteSent < 0) {
-            cout << "Could not send compressed.data()!\n";
-            WSACleanup();
-            break;
+
+        if (!connected) {
+            ImGui_ImplSDLRenderer2_NewFrame();
+            ImGui_ImplSDL2_NewFrame(window);
+            ImGui::NewFrame();
+
+            ImGui::SetNextWindowSize(ImVec2(appWidth, appHeight));
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            if (ImGui::Begin("Connect to server", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse)) {
+                ImGui::Text("IP Address");
+                ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
+                if (ImGui::Button("Initialize")) {
+                    if (bindSocket(serverSocket, ip, 55555)) {
+                        bound = true, validIP = true, isWaitingClient = true;
+                    }
+                    else {
+                        validIP = false;
+                    }
+                }
+                if (!validIP) {
+                    ImGui::Text("Initialize failed!");
+                }
+                if (bound) {
+                    ImGui::Text("Initialize success!");
+                    ImGui::Text("Waiting for client...");
+
+                    if (isWaitingClient) {
+                        isWaitingClient = false;
+                        auto fun = [](SOCKET& serverSocket, SOCKET& acceptServerSocket) {
+                            listenSocket(serverSocket, acceptServerSocket);
+                            connected = true;
+                            };
+                        std::thread t(fun, std::ref(serverSocket), std::ref(acceptServerSocket));
+                        t.detach();
+                    }
+                }
+            }
+            ImGui::End();
+
+            ImGui::Render();
+
+            ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
         }
-        cout << "Sent: " << byteSent << " bytes\n";
+
+        if (connected) {
+            if (!connectedToMouse) {
+                connectedToMouse = true;
+                initSocket(mouseSocket, acceptMouseSocket, ip, 55556);
+            }
+            
+            if (!startedSendImage) {
+                startedSendImage = true;
+                std::thread sendImageThread(captureAndSendImage, acceptServerSocket, header);
+                sendImageThread.detach();
+            } 
+
+            ImGui_ImplSDLRenderer2_NewFrame();
+            ImGui_ImplSDL2_NewFrame(window);
+            ImGui::NewFrame();
+
+            //ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetWindowSize(ImVec2(200, 100));
+            ImGui::SetNextWindowSize(ImVec2(200, 100));
+            if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
+                if (ImGui::Button("Exit")) {
+                    quit = true;
+                }
+            }
+            ImGui::End();
+
+            ImGui::Render();
+
+            SDL_RenderClear(renderer);
+
+            ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+        }
+        SDL_RenderPresent(renderer);
+
     }
 
     freeHeaderScreenshot(header);
     WSACleanup();
-    closesocket(s); closesocket(acceptSocket);
+    closesocket(serverSocket); closesocket(acceptServerSocket);
 
     return 0;
 }

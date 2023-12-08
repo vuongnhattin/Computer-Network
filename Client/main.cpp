@@ -1,5 +1,5 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <thread>
+#define _CRT_SECURE_NO_WARNINGS
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <winsock2.h>
@@ -8,125 +8,92 @@
 #include <chrono>
 #include <vector>
 #include <SDL.h>
+#include "Socket.h"
+#include "Image.h"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+#include "Mouse.h"
+#include "main.h"
+#include "UI.h"
+#include <mutex>
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std::chrono;
-using namespace std;
-
-#define PORT 55555
 
 const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-void initSocket(SOCKET& s) {
-	WSAData data;
-    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-		printf("WSAStartup fail!\n");
-		return;
-	}
-    else {
-		printf("WSAStartup ok!\n");
-	}
+bool quit = false, connected = false, validIP = true, startedMouseThread = false, startedContentThread = false;
+char ip[16] = "";
+SDL_Event event;
+SDL_Window* window;
+SDL_Renderer* renderer;
+SOCKET clientSocket, mouseSocket;
+SDL_Rect screenRect;
+std::mutex mtx;
 
-	s = INVALID_SOCKET;
-	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (s == INVALID_SOCKET) {
-		printf("Error at socket()!\n");
-		WSACleanup();
-		return;
-	}
-    else {
-		printf("socket() is ok!\n");
-	}
-
-	char ipv4[80];
-	cout << "Nhap dia chi IP: ";
-	cin >> ipv4;
-
-	sockaddr_in servAddr;
-	servAddr.sin_family = AF_INET;
-	inet_pton(AF_INET, ipv4, &servAddr.sin_addr.s_addr);
-	servAddr.sin_port = htons((u_short)PORT);
-	int servAddrLen = (int)sizeof(servAddr);
-
-    // connect
-    if (connect(s, (SOCKADDR*)&servAddr, sizeof(servAddr)) == SOCKET_ERROR) {
-        cout << "connect() failed\n";
-        WSACleanup();
-        exit(-1);
-    }
-    else {
-        cout << "connect() is ok!\n";
-    }
-}
+const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
 
 int main(int argc, char** argv) {
-    SOCKET s;
-    initSocket(s);
-    
-    SDL_Init(SDL_INIT_VIDEO);
-    const double scale = 0.8;
-    SDL_Window* window = SDL_CreateWindow("SDL2 Displaying Image", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth * scale, screenHeight * scale, 0);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
-    bool quit = false;
-    SDL_Event event;
+    SDL_Init(SDL_INIT_VIDEO);
+
+    const double scale = 0.8;
+    const int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
+
+    screenRect = { 0, 0, appWidth, appHeight };
+
+    window = SDL_CreateWindow("Client", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, appWidth, appHeight, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.Fonts->AddFontFromFileTTF("OpenSans-Regular.ttf", 24);
+    ImGui::StyleColorsDark();
+    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer2_Init(renderer);
 
     while (!quit) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-				quit = true;
-			}
-		}
-        auto start = high_resolution_clock::now();
-        int size;
-        int byteReceived = recv(s, (char*)&size, sizeof(int), 0);
-        if (byteReceived < 0) {
-			cout << "Error at recv()!\n";
-			exit(-1);
-		}
-        else {
-			cout << "Received size: " << size << endl;
-		}
-        vector<char> buffer(size);
-        int totalByteReceived = 0;
-        while (totalByteReceived < size) {
-            byteReceived = recv(s, reinterpret_cast<char*>(&buffer[0]) + totalByteReceived, size - totalByteReceived, 0);
-            if (byteReceived < 0) {
-				cout << "Error at recv()!\n";
-				exit(-1);
-			}
-			totalByteReceived += byteReceived;
+                quit = 1;
+            }
+            ImGui_ImplSDL2_ProcessEvent(&event);
         }
 
-        auto start2 = high_resolution_clock::now();
-        cv::Mat decompressedImage = cv::imdecode(cv::Mat(buffer), cv::IMREAD_COLOR);
-        SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(decompressedImage.data, decompressedImage.cols, decompressedImage.rows, decompressedImage.channels() * 8, decompressedImage.step, 0xff0000, 0x00ff00, 0x0000ff, 0);
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        auto stop2 = high_resolution_clock::now();
-        auto duration2 = duration_cast<milliseconds>(stop2 - start2);
-        cout << "Decompress time: " << duration2.count() << " ms\n";
+        if (!connected) {
+            renderLoginPanel();
+            SDL_RenderPresent(renderer);
+        }
 
-        cout << "DecompressedImage size: " << decompressedImage.size() << endl;
-        
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        if (connected) {
+            if (!startedMouseThread) {
+				startedMouseThread = true;
+                initSocket(mouseSocket, ip, mousePort);
+                std::thread mouseThread(sendMousePosition);
+                mouseThread.detach();
+			}
 
-        SDL_DestroyTexture(texture);
-        SDL_FreeSurface(surface);
-
-        auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(stop - start);
-        cout << "FPS: " << (double)1 / duration.count() * 1000000 << endl;
+            if (!startedContentThread) {
+				startedContentThread = true;
+                std::thread imageThread(displayContent);
+                imageThread.detach();
+			}
+        }
     }
+
+    ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    closesocket(s);
     WSACleanup();
+    closesocket(clientSocket);
 
     return 0;
 }
