@@ -139,6 +139,13 @@ int main(int argc, char** agrv) {
 
     }
 
+    ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
     freeHeaderScreenshot(header);
     WSACleanup();
     closesocket(serverSocket); closesocket(acceptServerSocket);
