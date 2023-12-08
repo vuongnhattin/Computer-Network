@@ -21,7 +21,7 @@ using namespace std::chrono;
 const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false;
+bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false, sentScreenResolution = false;
 char ip[16] = "";
 SOCKET serverSocket, acceptServerSocket;
 SOCKET mouseSocket, acceptMouseSocket;
@@ -100,6 +100,10 @@ int main(int argc, char** agrv) {
         }
 
         if (connected) {
+            if (!sentScreenResolution) {
+				sentScreenResolution = true;
+				sendScreenResolution(acceptServerSocket, screenWidth, screenHeight);
+			}
             if (!connectedToMouse) {
                 connectedToMouse = true;
                 initSocket(mouseSocket, acceptMouseSocket, ip, 55556);
