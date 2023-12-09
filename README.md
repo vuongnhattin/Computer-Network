@@ -1,1 +1,5 @@
-Thư viện sử dụng: SDL2 và ImGUI
+<h2>Thư viện sử dụng</h2> 
+<ul>
+  <li>SDL2</li>
+  <li>Dear ImGui</li>
+</ul>
