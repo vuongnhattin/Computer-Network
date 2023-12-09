@@ -3,7 +3,7 @@
 #include "main.h"
 #include <iostream>
 
-const int BUF_SIZE = 512;
+const int BUF_SIZE = 10;
 
 // Function to simulate a key event
 void simulateKeyEvent(const char* serializedData) {

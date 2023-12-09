@@ -22,7 +22,7 @@ using namespace std::chrono;
 const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false, sentScreenResolution = false, startedKeyboardSocket = false;
+bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, startedMouseKeyboadSocket = false, startedSendImage = false, sentScreenResolution = false;
 char ip[16] = "";
 SOCKET serverSocket, acceptServerSocket;
 SOCKET mouseSocket, acceptMouseSocket;
@@ -107,11 +107,11 @@ int main(int argc, char** agrv) {
 				sentScreenResolution = true;
 				sendScreenResolution(acceptServerSocket, screenWidth, screenHeight);
 			}
-            if (!connectedToMouse) {
-                connectedToMouse = true;
+            if (!startedMouseKeyboadSocket) {
+                startedMouseKeyboadSocket = true;
                 initSocket(mouseSocket, acceptMouseSocket, ip, mousePort);
-
                 initSocket(keyboardSocket, acceptKeyboardSocket, ip, keyboardPort);
+
                 std::thread keyboardThread(handleKeyboard, acceptKeyboardSocket);
                 keyboardThread.detach();
             }
