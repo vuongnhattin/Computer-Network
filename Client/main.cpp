@@ -17,19 +17,20 @@
 #include "main.h"
 #include "UI.h"
 #include <mutex>
+#include "Keyboard.h"
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std::chrono;
 
 int screenWidth = GetSystemMetrics(SM_CXSCREEN), screenHeight = GetSystemMetrics(SM_CYSCREEN);
-bool quit = false, connected = false, validIP = true, startedMouseThread = false, startedContentThread = false, gotScreenResolution = false;
+bool quit = false, connected = false, validIP = true, startedMouseThread = false, startedContentThread = false, startedKeyboardThread = false, gotScreenResolution = false;
 char ip[16] = "";
 SDL_Event event;
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Rect screenRect;
 std::mutex mtx;
-SOCKET imageSocket, mouseSocket;
+SOCKET imageSocket, mouseSocket, keyboardSocket;
 
 const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
 
@@ -59,6 +60,10 @@ int main(int argc, char** argv) {
 
                 initClientSocket(mouseSocket, ip, mousePort);
 
+                initClientSocket(keyboardSocket, ip, keyboardPort);
+                std::thread keyboardThread(sendKeyboardEvents);
+                keyboardThread.detach();
+
                 std::thread mouseThread(sendMousePosition);
                 mouseThread.detach();
 			}
@@ -79,3 +84,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+

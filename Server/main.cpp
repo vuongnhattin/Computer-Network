@@ -14,6 +14,7 @@
 #include "imgui_impl_sdlrenderer2.h"
 #include <thread>
 #include "main.h"
+#include "Keyboard.h"
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std::chrono;
@@ -21,10 +22,12 @@ using namespace std::chrono;
 const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false, sentScreenResolution = false;
+bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, connectedToMouse = false, startedSendImage = false, sentScreenResolution = false, startedKeyboardSocket = false;
 char ip[16] = "";
 SOCKET serverSocket, acceptServerSocket;
 SOCKET mouseSocket, acceptMouseSocket;
+SOCKET keyboardSocket, acceptKeyboardSocket;
+const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
 
 int main(int argc, char** agrv) {
     double scale = 0.8;
@@ -67,7 +70,7 @@ int main(int argc, char** agrv) {
                 ImGui::Text("Server's IP Address");
                 ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
                 if (ImGui::Button("Initialize")) {
-                    if (bindSocket(serverSocket, ip, 55555)) {
+                    if (bindSocket(serverSocket, ip, imagePort)) {
                         bound = true, validIP = true, isWaitingClient = true;
                     }
                     else {
@@ -106,14 +109,18 @@ int main(int argc, char** agrv) {
 			}
             if (!connectedToMouse) {
                 connectedToMouse = true;
-                initSocket(mouseSocket, acceptMouseSocket, ip, 55556);
+                initSocket(mouseSocket, acceptMouseSocket, ip, mousePort);
+
+                initSocket(keyboardSocket, acceptKeyboardSocket, ip, keyboardPort);
+                std::thread keyboardThread(handleKeyboard, acceptKeyboardSocket);
+                keyboardThread.detach();
             }
             
             if (!startedSendImage) {
                 startedSendImage = true;
                 std::thread sendImageThread(captureAndSendImage, acceptServerSocket, header);
                 sendImageThread.detach();
-            } 
+            }
 
             ImGui_ImplSDLRenderer2_NewFrame();
             ImGui_ImplSDL2_NewFrame(window);
@@ -152,3 +159,4 @@ int main(int argc, char** agrv) {
 
     return 0;
 }
+

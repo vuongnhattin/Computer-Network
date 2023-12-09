@@ -4,8 +4,6 @@
 #include <WS2tcpip.h>
 #include "main.h"
 
-#define PORT 55555
-
 bool initClientSocket(SOCKET& clientSocket, char* ip, const int port) {
 	WSAData data;
 	if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
