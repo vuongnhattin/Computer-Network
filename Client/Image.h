@@ -3,5 +3,5 @@
 #include <SDL.h>
 #include <opencv2/opencv.hpp>
 
-cv::Mat receiveImage(SOCKET clientSocket);
+cv::Mat receiveImage();
 void renderImage(cv::Mat image);

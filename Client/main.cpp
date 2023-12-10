@@ -16,64 +16,66 @@
 #include "Mouse.h"
 #include "main.h"
 #include "UI.h"
-#include <mutex>
 #include "Keyboard.h"
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std::chrono;
 
 int screenWidth = GetSystemMetrics(SM_CXSCREEN), screenHeight = GetSystemMetrics(SM_CYSCREEN);
-bool quit = false, connected = false, validIP = true, startedMouseThread = false, startedContentThread = false, startedKeyboardThread = false, gotScreenResolution = false;
+int serverScreenWidth, serverScreenHeight;
+
 char ip[16] = "";
+
 SDL_Event event;
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Rect screenRect;
-std::mutex mtx;
+
 SOCKET imageSocket, mouseSocket, keyboardSocket;
+
+State state = State::CONNECT_MENU;
+ConnectState connectState = ConnectState::NOT_YET;
 
 const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
 
 int main(int argc, char** argv) {
     initUI();
 
-    while (!quit) {
+    while (state != State::QUIT) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                quit = 1;
+                state = State::QUIT;
             }
             ImGui_ImplSDL2_ProcessEvent(&event);
         }
 
-        if (!connected) {
-            renderLoginPanel();
-            SDL_RenderPresent(renderer);
-        }
+        switch (state) {
+        case State::CONNECT_MENU:
+            displayConnectPanel();
+            break;
 
-        else {
-            if (!gotScreenResolution) {
-                gotScreenResolution = true;
-                getScreenResolution();
-            }
-            if (!startedMouseThread) {
-				startedMouseThread = true;
+        case State::INIT_CONTENT:
+            getServerScreenResolution();
 
-                initClientSocket(mouseSocket, ip, mousePort);
-
-                initClientSocket(keyboardSocket, ip, keyboardPort);
+            initClientSocket(mouseSocket, ip, mousePort);
+            initClientSocket(keyboardSocket, ip, keyboardPort);
+            {
                 std::thread keyboardThread(sendKeyboardEvents);
                 keyboardThread.detach();
 
-                std::thread mouseThread(sendMousePosition);
+                std::thread mouseThread(sendMouseEvents);
                 mouseThread.detach();
-			}
 
-            if (!startedContentThread) {
-				startedContentThread = true;
-
-                std::thread imageThread(displayContent);
+                std::thread imageThread(displayImage);
                 imageThread.detach();
-			}
+            }
+            state = State::DISPLAY_IMAGE;
+            break;
+
+        case State::DISPLAY_IMAGE: break;
+
+        default:
+            break;
         }
     }
 
@@ -81,6 +83,8 @@ int main(int argc, char** argv) {
 
     WSACleanup();
     closesocket(imageSocket);
+    closesocket(mouseSocket);
+    closesocket(keyboardSocket);
 
     return 0;
 }

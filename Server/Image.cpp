@@ -55,7 +55,7 @@ void freeHeaderScreenshot(HeaderScreenshot& header) {
     ReleaseDC(NULL, header.screenDC);
 }
 
-void captureAndSendImage(SOCKET acceptServerSocket ,HeaderScreenshot header) {
+void captureAndSendImage(SOCKET acceptImageSocket ,HeaderScreenshot header) {
     while (!quit) {
         auto start = high_resolution_clock::now();
         cv::Mat frame = capture(header);
@@ -73,7 +73,7 @@ void captureAndSendImage(SOCKET acceptServerSocket ,HeaderScreenshot header) {
         std::cout << "compress() took: " << duration.count() << "ms\n";
 
         int size = compressed.size();
-        int byteSent = send(acceptServerSocket, (char*)&size, sizeof(int), 0);
+        int byteSent = send(acceptImageSocket, (char*)&size, sizeof(int), 0);
         if (byteSent < 0) {
             std::cout << "Error at send()\n";
             WSACleanup();
@@ -81,7 +81,7 @@ void captureAndSendImage(SOCKET acceptServerSocket ,HeaderScreenshot header) {
         }
 
         std::cout << "Sent: " << byteSent << " bytes\n";
-        byteSent = send(acceptServerSocket, (char*)&compressed[0], compressed.size(), 0);
+        byteSent = send(acceptImageSocket, (char*)&compressed[0], compressed.size(), 0);
         if (byteSent < 0) {
             std::cout << "Could not send compressed.data()!\n";
             WSACleanup();
@@ -90,7 +90,7 @@ void captureAndSendImage(SOCKET acceptServerSocket ,HeaderScreenshot header) {
         std::cout << "Sent: " << byteSent << " bytes\n";
 
         char buff[3];
-        recv(acceptServerSocket, buff, 3, 0);
+        recv(acceptImageSocket, buff, 3, 0);
         if (strcmp(buff, "NO") == 0) {
             quit = true;
         }

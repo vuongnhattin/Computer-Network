@@ -6,12 +6,10 @@
 #include "Socket.h"
 #include <chrono>
 
-using namespace std::chrono;
-
 void initUI() {
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const double scale = 0.8;
+	const double scale = 1;
 	const int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
 
 	screenRect = { 0, 0, appWidth, appHeight };
@@ -37,32 +35,43 @@ void cleanUpUI() {
 	SDL_Quit();
 }
 
-void renderLoginPanel() {
+void displayConnectPanel() {
 	ImGui_ImplSDLRenderer2_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
-
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screenRect.w, screenRect.h));
+
     if (ImGui::Begin("Connect to server", NULL, ImGuiWindowFlags_NoResize)) {
+
 		ImGui::Text("Server's IP address:");
+
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
+
         if (ImGui::Button("Connect")) {
             if (initClientSocket(imageSocket, ip, imagePort)) {
-				connected = true;
+				connectState = ConnectState::SUCCESS;
 			}
             else {
-				validIP = false;
+				connectState = ConnectState::FAIL;
 			}
 		}
-		if (!validIP) {
+		if (ImGui::Button("Exit")) {
+			state = State::QUIT;
+		}
+		if (connectState == ConnectState::FAIL) {
 			ImGui::Text("Invalid IP address!");
+		}
+		else if (connectState == ConnectState::SUCCESS) {
+			state = State::INIT_CONTENT;
 		}
 	}
 	ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+
+	SDL_RenderPresent(renderer);
 }
 
 void renderControlPanel() {
@@ -73,7 +82,7 @@ void renderControlPanel() {
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
         if (ImGui::Button("Exit")) {
-            quit = true;
+			state = State::QUIT;
         }
     }
     ImGui::End();
@@ -82,17 +91,19 @@ void renderControlPanel() {
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 }
 
-void displayContent() {
-    while (!quit) {
-		auto start = high_resolution_clock::now();
+void displayImage() {
+    while (state != State::QUIT) {
+		auto start = std::chrono::high_resolution_clock::now();
 
-		cv::Mat image = receiveImage(imageSocket);
+		cv::Mat image = receiveImage();
         renderImage(image);
+
 		renderControlPanel();
+
 		SDL_RenderPresent(renderer);
 
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<milliseconds>(stop - start);
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 		std::cout << "FPS: " << 1000.0 / duration.count() << "\n";
 	}
 }

@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "Socket.h"
 #include <iostream>
 #include <WinSock2.h>
@@ -47,12 +48,12 @@ bool initClientSocket(SOCKET& clientSocket, char* ip, const int port) {
 	return true;
 }
 
-void getScreenResolution() {
-	char buffer[10];
+void getServerScreenResolution() {
+	char buffer[10] = "\0";
 
 	recv(imageSocket, buffer, 10, 0);
-	screenWidth = atoi(buffer);
+	(void)sscanf(buffer, "%d", &serverScreenWidth);
 
 	recv(imageSocket, buffer, 10, 0);
-	screenHeight = atoi(buffer);
+	(void)sscanf(buffer, "%d", &serverScreenHeight);
 }

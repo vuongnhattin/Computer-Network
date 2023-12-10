@@ -7,11 +7,9 @@
 #include <thread>
 #include "main.h"
 
-using namespace std::chrono;
-
-cv::Mat receiveImage(SOCKET clientSocket) {
+cv::Mat receiveImage() {
 	int size;
-	int byteReceived = recv(clientSocket, (char*)&size, sizeof(int), 0);
+	int byteReceived = recv(imageSocket, (char*)&size, sizeof(int), 0);
     if (byteReceived < 0) {
 		std::cout << "Error at recv()!\n";
 		return cv::Mat();
@@ -20,7 +18,7 @@ cv::Mat receiveImage(SOCKET clientSocket) {
 	std::vector<char> buffer(size);
 	int totalByteReceived = 0;
     while (totalByteReceived < size) {
-		byteReceived = recv(clientSocket, reinterpret_cast<char*>(&buffer[0]) + totalByteReceived, size - totalByteReceived, 0);
+		byteReceived = recv(imageSocket, reinterpret_cast<char*>(&buffer[0]) + totalByteReceived, size - totalByteReceived, 0);
         if (byteReceived < 0) {
 			std::cout << "Error at recv()!\n";
 			return cv::Mat();
@@ -28,8 +26,8 @@ cv::Mat receiveImage(SOCKET clientSocket) {
 		totalByteReceived += byteReceived;
 	}
 
-	if (quit) send(clientSocket, "NO", 2, 0);
-	else send(clientSocket, "OK", 2, 0);
+	if (state == State::QUIT) send(imageSocket, "NO", 2, 0);
+	else send(imageSocket, "OK", 2, 0);
 
 	cv::Mat decompressedImage = cv::imdecode(cv::Mat(buffer), cv::IMREAD_COLOR);
 

@@ -15,6 +15,7 @@
 #include <thread>
 #include "main.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std::chrono;
@@ -24,7 +25,7 @@ const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
 bool quit = false, validIP = true, bound = false, connected = false, buttonEnabled = true, isWaitingClient = false, startedMouseKeyboadSocket = false, startedSendImage = false, sentScreenResolution = false;
 char ip[16] = "";
-SOCKET serverSocket, acceptServerSocket;
+SOCKET imageSocket, acceptImageSocket;
 SOCKET mouseSocket, acceptMouseSocket;
 SOCKET keyboardSocket, acceptKeyboardSocket;
 const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
@@ -70,7 +71,7 @@ int main(int argc, char** agrv) {
                 ImGui::Text("Server's IP Address");
                 ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
                 if (ImGui::Button("Initialize")) {
-                    if (bindSocket(serverSocket, ip, imagePort)) {
+                    if (bindSocket(imageSocket, ip, imagePort)) {
                         bound = true, validIP = true, isWaitingClient = true;
                     }
                     else {
@@ -86,11 +87,11 @@ int main(int argc, char** agrv) {
 
                     if (isWaitingClient) {
                         isWaitingClient = false;
-                        auto fun = [](SOCKET& serverSocket, SOCKET& acceptServerSocket) {
-                            listenSocket(serverSocket, acceptServerSocket);
+                        auto fun = [](SOCKET& imageSocket, SOCKET& acceptImageSocket) {
+                            listenSocket(imageSocket, acceptImageSocket);
                             connected = true;
                             };
-                        std::thread t(fun, std::ref(serverSocket), std::ref(acceptServerSocket));
+                        std::thread t(fun, std::ref(imageSocket), std::ref(acceptImageSocket));
                         t.detach();
                     }
                 }
@@ -105,20 +106,22 @@ int main(int argc, char** agrv) {
         if (connected) {
             if (!sentScreenResolution) {
 				sentScreenResolution = true;
-				sendScreenResolution(acceptServerSocket, screenWidth, screenHeight);
+				sendScreenResolution(acceptImageSocket, screenWidth, screenHeight);
 			}
             if (!startedMouseKeyboadSocket) {
                 startedMouseKeyboadSocket = true;
-                initSocket(mouseSocket, acceptMouseSocket, ip, mousePort);
-                initSocket(keyboardSocket, acceptKeyboardSocket, ip, keyboardPort);
+                initServerSocket(mouseSocket, acceptMouseSocket, ip, mousePort);
+                initServerSocket(keyboardSocket, acceptKeyboardSocket, ip, keyboardPort);
 
                 std::thread keyboardThread(handleKeyboard, acceptKeyboardSocket);
                 keyboardThread.detach();
+                std::thread mouseThread(handleMouse, acceptMouseSocket);
+                mouseThread.detach();
             }
             
             if (!startedSendImage) {
                 startedSendImage = true;
-                std::thread sendImageThread(captureAndSendImage, acceptServerSocket, header);
+                std::thread sendImageThread(captureAndSendImage, acceptImageSocket, header);
                 sendImageThread.detach();
             }
 
@@ -143,7 +146,6 @@ int main(int argc, char** agrv) {
             ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
         }
         SDL_RenderPresent(renderer);
-
     }
 
     ImGui_ImplSDLRenderer2_Shutdown();
@@ -155,7 +157,9 @@ int main(int argc, char** agrv) {
 
     freeHeaderScreenshot(header);
     WSACleanup();
-    closesocket(serverSocket); closesocket(acceptServerSocket);
+    closesocket(imageSocket); closesocket(acceptImageSocket);
+    closesocket(mouseSocket); closesocket(acceptMouseSocket);
+    closesocket(keyboardSocket); closesocket(acceptKeyboardSocket);
 
     return 0;
 }

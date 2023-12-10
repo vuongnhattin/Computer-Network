@@ -2,8 +2,11 @@
 #include <WinSock2.h>
 #include "main.h"
 #include <iostream>
+#include <thread>
 
-const int BUF_SIZE = 256;
+using namespace std::chrono;
+
+const int BUF_SIZE = 20;
 
 void serializeEvent(const KeyEvent& event, char* buffer) {
 
@@ -45,7 +48,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
                 ctrlPressed = FALSE;
                 event.ctrlPressed = TRUE;
                 serializeEvent(event, buffer);
-                Sleep(10); // Avoid race condition
+                std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Avoid race condition
             }
             break;
         case VK_SHIFT:
@@ -56,7 +59,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
                 shiftPressed = FALSE;
                 event.shiftPressed = TRUE;
                 serializeEvent(event, buffer);
-                Sleep(10); // Avoid race condition
+                std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Avoid race condition
             }
             break;
         case VK_MENU: // Alt key
@@ -67,7 +70,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
                 altPressed = FALSE;
                 event.altPressed = TRUE;
                 serializeEvent(event, buffer);
-                Sleep(10); // Avoid race condition
+                std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Avoid race condition
             }
             break;
         case VK_LWIN: // Windows key
@@ -79,7 +82,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
                 winPressed = FALSE;
                 event.winPressed = TRUE;
                 serializeEvent(event, buffer);
-                Sleep(10); // Avoid race condition
+                std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Avoid race condition
             }
             break;
         }
@@ -134,7 +137,7 @@ void sendKeyboardEvents() {
 	}
 
 	MSG msg;
-    while (!quit && GetMessage(&msg, NULL, 0, 0) != 0) {
+    while (state != State::QUIT && GetMessage(&msg, NULL, 0, 0) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
