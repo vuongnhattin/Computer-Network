@@ -3,6 +3,8 @@
 #include <WinSock2.h>
 #include <iostream>
 #include "main.h"
+#include <chrono>
+#include <thread>
 
 const int BUF_SIZE = 20;
 
@@ -29,7 +31,10 @@ void printEvent(const MouseEvent& event) {
     std::cout << "Move: " << event.move << std::endl;
     std::cout << std::endl;
 }
+
+
 LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
+    const double screenRatio = serverScreenWidth * 1.0 / screenWidth;
     if (code == HC_ACTION) {
         MSLLHOOKSTRUCT* ms = (MSLLHOOKSTRUCT*)lParam;
         char buffer[BUF_SIZE];
@@ -57,9 +62,9 @@ LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
             break;
         case WM_MOUSEMOVE:
             event.move = true;
-            event.mouseX = ms->pt.x;
-            event.mouseY = ms->pt.y;
-            Sleep(10);
+            event.mouseX = (DWORD)(ms->pt.x * screenRatio);
+            event.mouseY = (DWORD)(ms->pt.y * screenRatio);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             break;
         case WM_MOUSEWHEEL:
             event.mouseWheelDelta = GET_WHEEL_DELTA_WPARAM(ms->mouseData);
