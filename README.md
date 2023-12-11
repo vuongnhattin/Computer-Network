@@ -2,4 +2,5 @@
 <ul>
   <li>SDL2</li>
   <li>Dear ImGui</li>
+  <li>OpenCV</li>
 </ul>
