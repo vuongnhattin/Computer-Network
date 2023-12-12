@@ -49,7 +49,7 @@ void simulateMouseEvent(const char* serializedData) {
 
 void handleMouse(SOCKET acceptMouseSocket) {
 	char buff[BUF_SIZE];
-    while (!quit) {
+    while (state != State::QUIT) {
 		recv(acceptMouseSocket, buff, BUF_SIZE, 0);
 		simulateMouseEvent(buff);
 	}

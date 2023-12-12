@@ -1,5 +1,6 @@
 #pragma once
-#include <Windows.h>
+#include <WinSock2.h>
+//#include <Windows.h>
 
 struct MouseEvent {
     DWORD mouseX = 0;
@@ -12,5 +13,5 @@ struct MouseEvent {
     bool move = 0;
 };
 
-void simulateKMouseEvent(const char* serializedData);
+void simulateMouseEvent(const char* serializedData);
 void handleMouse(SOCKET acceptMouseSocket);

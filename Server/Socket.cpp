@@ -3,8 +3,7 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
-
-#define PORT 55555
+#include "main.h"
 
 bool bindSocket(SOCKET& imageSocket, const char* ip, const int port) {
     WSAData data;
@@ -50,8 +49,8 @@ bool bindSocket(SOCKET& imageSocket, const char* ip, const int port) {
     return true;
 }
 
-bool listenSocket(SOCKET& imageSocket, SOCKET& acceptSocket) {
-    if (listen(imageSocket, 1) == SOCKET_ERROR) {
+bool listenSocket(SOCKET& serverSocket, SOCKET& acceptSocket) {
+    if (listen(serverSocket, 1) == SOCKET_ERROR) {
         std::cout << "error at listen()\n";
         WSACleanup();
         return false;
@@ -61,7 +60,7 @@ bool listenSocket(SOCKET& imageSocket, SOCKET& acceptSocket) {
         std::cout << "listening...\n";
     }
 
-    acceptSocket = accept(imageSocket, NULL, NULL);
+    acceptSocket = accept(serverSocket, NULL, NULL);
     if (acceptSocket == INVALID_SOCKET) {
         std::cout << "failed at accept()\n";
         WSACleanup();

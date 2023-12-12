@@ -26,7 +26,7 @@ void initUI() {
 	ImGui_ImplSDLRenderer2_Init(renderer);
 }
 
-void cleanUpUI() {
+void freeUI() {
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
@@ -50,19 +50,19 @@ void displayConnectPanel() {
 
         if (ImGui::Button("Connect")) {
             if (initClientSocket(imageSocket, ip, imagePort)) {
-				connectState = ConnectState::SUCCESS;
+				connectState = ConnectionState::SUCCESS;
 			}
             else {
-				connectState = ConnectState::FAIL;
+				connectState = ConnectionState::FAIL;
 			}
 		}
 		if (ImGui::Button("Exit")) {
 			state = State::QUIT;
 		}
-		if (connectState == ConnectState::FAIL) {
+		if (connectState == ConnectionState::FAIL) {
 			ImGui::Text("Invalid IP address!");
 		}
-		else if (connectState == ConnectState::SUCCESS) {
+		else if (connectState == ConnectionState::SUCCESS) {
 			state = State::INIT_CONTENT;
 		}
 	}
@@ -74,7 +74,7 @@ void displayConnectPanel() {
 	SDL_RenderPresent(renderer);
 }
 
-void renderControlPanel() {
+void displayControlPanel() {
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
@@ -89,6 +89,19 @@ void renderControlPanel() {
 
     ImGui::Render();
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+	SDL_RenderPresent(renderer);
+}
+
+void renderImage(cv::Mat image) {
+	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(image.data, image.cols, image.rows, image.channels() * 8, image.step, 0xff0000, 0x00ff00, 0x0000ff, 0);
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+	SDL_RenderCopy(renderer, texture, NULL, &screenRect);
+
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(0));
 }
 
 void displayImage() {
@@ -98,7 +111,7 @@ void displayImage() {
 		cv::Mat image = receiveImage();
         renderImage(image);
 
-		renderControlPanel();
+		displayControlPanel();
 
 		SDL_RenderPresent(renderer);
 

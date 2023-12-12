@@ -7,10 +7,6 @@
 
 using namespace std::chrono;
 
-const int screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-const int screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-#define DEPTH 4
-
 void initHeaderScreenshot(HeaderScreenshot& header) {
     header.screenDC = GetDC(NULL);
     header.memDC = CreateCompatibleDC(header.screenDC);
@@ -55,15 +51,23 @@ void freeHeaderScreenshot(HeaderScreenshot& header) {
     ReleaseDC(NULL, header.screenDC);
 }
 
+void receiveImageACK(SOCKET acceptImageSocket) {
+	char ack[3];
+	recv(acceptImageSocket, ack, 3, 0);
+    if (strcmp(ack, "NO") == 0) {
+        state = State::QUIT;
+	}
+}
+
 void captureAndSendImage(SOCKET acceptImageSocket ,HeaderScreenshot header) {
-    while (!quit) {
+    while (state != State::QUIT) {
         auto start = high_resolution_clock::now();
         cv::Mat frame = capture(header);
-        cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
+        //cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(stop - start);
         std::cout << "capture() took: " << duration.count() << "ms\n";
-
+        
         start = high_resolution_clock::now();
 
         std::vector<uchar> compressed = compressImage(frame, 80);
@@ -89,10 +93,6 @@ void captureAndSendImage(SOCKET acceptImageSocket ,HeaderScreenshot header) {
         }
         std::cout << "Sent: " << byteSent << " bytes\n";
 
-        char buff[3];
-        recv(acceptImageSocket, buff, 3, 0);
-        if (strcmp(buff, "NO") == 0) {
-            quit = true;
-        }
+        receiveImageACK(acceptImageSocket);
     }
 }

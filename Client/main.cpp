@@ -19,10 +19,8 @@
 #include "Keyboard.h"
 #pragma comment(lib, "ws2_32.lib")
 
-using namespace std::chrono;
-
 int screenWidth = GetSystemMetrics(SM_CXSCREEN), screenHeight = GetSystemMetrics(SM_CYSCREEN);
-int serverScreenWidth, serverScreenHeight;
+int serverScreenWidth = 1280, serverScreenHeight = 720;
 
 char ip[16] = "";
 
@@ -34,9 +32,7 @@ SDL_Rect screenRect;
 SOCKET imageSocket, mouseSocket, keyboardSocket;
 
 State state = State::CONNECT_MENU;
-ConnectState connectState = ConnectState::NOT_YET;
-
-const int imagePort = 55555, mousePort = 55556, keyboardPort = 55557;
+ConnectionState connectState = ConnectionState::NOT_YET;
 
 int main(int argc, char** argv) {
     initUI();
@@ -59,6 +55,7 @@ int main(int argc, char** argv) {
 
             initClientSocket(mouseSocket, ip, mousePort);
             initClientSocket(keyboardSocket, ip, keyboardPort);
+
             {
                 std::thread keyboardThread(sendKeyboardEvents);
                 keyboardThread.detach();
@@ -69,6 +66,7 @@ int main(int argc, char** argv) {
                 std::thread imageThread(displayImage);
                 imageThread.detach();
             }
+
             state = State::DISPLAY_IMAGE;
             break;
 
@@ -79,13 +77,13 @@ int main(int argc, char** argv) {
         }
     }
 
-    cleanUpUI();
+    freeUI();
 
     WSACleanup();
     closesocket(imageSocket);
     closesocket(mouseSocket);
     closesocket(keyboardSocket);
-
+    
     return 0;
 }
 

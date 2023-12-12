@@ -7,6 +7,16 @@
 #include <thread>
 #include "main.h"
 
+cv::Mat decompressImage(std::vector<char> buffer) {
+	cv::Mat decompressedImage = cv::imdecode(cv::Mat(buffer), cv::IMREAD_COLOR);
+	return decompressedImage;
+}
+
+void sendImageACK() {
+	if (state == State::QUIT) send(imageSocket, "NO", 2, 0);
+	else send(imageSocket, "OK", 2, 0);
+}
+
 cv::Mat receiveImage() {
 	int size;
 	int byteReceived = recv(imageSocket, (char*)&size, sizeof(int), 0);
@@ -26,22 +36,8 @@ cv::Mat receiveImage() {
 		totalByteReceived += byteReceived;
 	}
 
-	if (state == State::QUIT) send(imageSocket, "NO", 2, 0);
-	else send(imageSocket, "OK", 2, 0);
+	sendImageACK();
 
-	cv::Mat decompressedImage = cv::imdecode(cv::Mat(buffer), cv::IMREAD_COLOR);
-
-	return decompressedImage;
+	return decompressImage(buffer);
 }
 
-void renderImage(cv::Mat image) {
-	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(image.data, image.cols, image.rows, image.channels() * 8, image.step, 0xff0000, 0x00ff00, 0x0000ff, 0);
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	SDL_RenderCopy(renderer, texture, NULL, &screenRect);
-
-	SDL_DestroyTexture(texture);
-	SDL_FreeSurface(surface);
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(0));
-}

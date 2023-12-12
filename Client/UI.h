@@ -1,4 +1,5 @@
 #pragma once
+#include <opencv2/opencv.hpp>
 
 enum class State {
 	CONNECT_MENU,
@@ -7,14 +8,15 @@ enum class State {
 	QUIT,
 };
 
-enum class ConnectState {
+enum class ConnectionState {
 	NOT_YET,
 	FAIL,
 	SUCCESS,
 };
 
 void initUI();
-void cleanUpUI();
+void freeUI();
 void displayConnectPanel();
-void renderControlPanel();
+void displayControlPanel();
+void renderImage(cv::Mat image);
 void displayImage();
