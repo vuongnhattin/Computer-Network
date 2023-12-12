@@ -74,7 +74,7 @@ void displayConnectPanel() {
 	SDL_RenderPresent(renderer);
 }
 
-void displayControlPanel() {
+void renderControlPanel() {
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
@@ -89,7 +89,6 @@ void displayControlPanel() {
 
     ImGui::Render();
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-	SDL_RenderPresent(renderer);
 }
 
 void renderImage(cv::Mat image) {
@@ -104,14 +103,15 @@ void renderImage(cv::Mat image) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(0));
 }
 
-void displayImage() {
+void receiveAndDisplayImage() {
     while (state != State::QUIT) {
 		auto start = std::chrono::high_resolution_clock::now();
 
 		cv::Mat image = receiveImage();
+
         renderImage(image);
 
-		displayControlPanel();
+		renderControlPanel();
 
 		SDL_RenderPresent(renderer);
 

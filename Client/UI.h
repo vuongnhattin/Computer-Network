@@ -17,6 +17,6 @@ enum class ConnectionState {
 void initUI();
 void freeUI();
 void displayConnectPanel();
-void displayControlPanel();
+void renderControlPanel();
 void renderImage(cv::Mat image);
-void displayImage();
+void receiveAndDisplayImage();

@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
                 std::thread mouseThread(sendMouseEvents);
                 mouseThread.detach();
 
-                std::thread imageThread(displayImage);
+                std::thread imageThread(receiveAndDisplayImage);
                 imageThread.detach();
             }
 
