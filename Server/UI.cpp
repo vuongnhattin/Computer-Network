@@ -102,7 +102,9 @@ void displayControlPanel() {
 
     ImGui::Render();
 
+    SDL_RenderClear(renderer);
+
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 
-    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 }
