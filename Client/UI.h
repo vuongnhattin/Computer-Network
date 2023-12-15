@@ -14,6 +14,11 @@ enum class ConnectionState {
 	SUCCESS,
 };
 
+enum class DiscoverState {
+	NOT_YET,
+	SUCCESS,
+};
+
 void initUI();
 void freeUI();
 void displayConnectPanel();

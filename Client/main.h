@@ -15,9 +15,11 @@ extern SDL_Renderer* renderer;
 extern SOCKET imageSocket, mouseSocket, keyboardSocket;
 extern SDL_Rect screenRect;
 
+#define broadcastPort 55554
 #define imagePort 55555
 #define mousePort 55556
 #define keyboardPort 55557
 
 extern State state;
 extern ConnectionState connectState;
+extern DiscoverState discoverState;

@@ -9,6 +9,7 @@ extern SDL_Renderer* renderer;
 extern SDL_Rect screenRect;
 
 #define DEPTH 4
+#define broadcastPort 55554
 #define imagePort 55555
 #define mousePort 55556
 #define keyboardPort 55557

@@ -1,10 +1,67 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "UI.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui_impl_sdl2.h"
 #include "Image.h"
 #include "main.h"
 #include "Socket.h"
+#include <vector>
+#include <string>
 #include <chrono>
+#include <iostream>
+#include <WS2tcpip.h>
+#pragma comment (lib, "ws2_32.lib")
+
+std::set < std::pair<std::string, std::string>> serversSet;
+
+char** ipList;
+char** hostnameList;
+char** ipAndHostnameList;
+int currentItem = 0;
+
+void broadcastC(char *ip) {
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+	sockaddr_in serverHint;
+	serverHint.sin_port = htons(broadcastPort);
+	serverHint.sin_family = AF_INET;
+	inet_pton(AF_INET, ip, &serverHint.sin_addr);
+
+	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+	struct timeval tv;
+	tv.tv_sec = 1;  // 1 second timeout
+	tv.tv_usec = 0;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+	if (sock == SOCKET_ERROR) {
+		std::cout << "error at socket()\n";
+		return;
+	}
+	char sendBuf[] = "req name";
+	int sendBufLen = strlen(sendBuf) + 1;	
+	if (sendto(sock, sendBuf, sendBufLen, 0,(sockaddr*)&serverHint, sizeof(serverHint))== SOCKET_ERROR) {
+		std::cout << "error at sendto()\n";
+	}
+	int max_attempt = 10;
+	for (int attempt = 0; attempt < max_attempt;attempt++) {
+		sockaddr_in recvAddr;
+		int recvAddrLen = sizeof(recvAddr);
+		char recvBuf[100]{ 0 };
+		int recvBufLen = 100;
+		if (recvfrom(sock, recvBuf, recvBufLen, 0, (sockaddr*)&recvAddr, &recvAddrLen) == SOCKET_ERROR) {
+			continue;
+		}
+		max_attempt += 10;
+		char tmpIPbuf[20]{ 0 };
+		inet_ntop(AF_INET, &recvAddr.sin_addr, tmpIPbuf, 20);
+		std::string tmpIP(tmpIPbuf);
+		std::string tmpName(recvBuf);
+		//add server to serversSet
+		std::pair<std::string, std::string> tmp(tmpIP, tmpName);
+		serversSet.insert(tmp);
+	}
+
+}
 
 void initUI() {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -35,7 +92,26 @@ void freeUI() {
 	SDL_Quit();
 }
 
+void createServersList() {
+	ipList = new char* [serversSet.size()];
+	hostnameList = new char* [serversSet.size()];
+	ipAndHostnameList = new char* [serversSet.size()];
+	int i = 0;
+	for (auto item : serversSet) {
+		ipList[i] = new char[item.first.length() + 1];
+		strcpy(ipList[i], item.first.c_str());
+		hostnameList[i] = new char[item.second.length() + 1];
+		strcpy(hostnameList[i], item.second.c_str());
+		ipAndHostnameList[i] = new char[item.first.length() + item.second.length() + 3];
+		strcpy(ipAndHostnameList[i], item.second.c_str());
+		strcat(ipAndHostnameList[i], " - ");
+		strcat(ipAndHostnameList[i], item.first.c_str());
+		i++;
+	}
+}
+
 void displayConnectPanel() {
+
 	ImGui_ImplSDLRenderer2_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
@@ -48,23 +124,41 @@ void displayConnectPanel() {
 
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
 
-        if (ImGui::Button("Connect")) {
-            if (initClientSocket(imageSocket, ip, imagePort)) {
-				connectState = ConnectionState::SUCCESS;
-			}
-            else {
-				connectState = ConnectionState::FAIL;
+		if (ImGui::Button("Discover Servers")) {
+			broadcastC(ip);
+			createServersList();
+			discoverState = DiscoverState::SUCCESS;
+			std::cout << "Active servers:\n";
+			for (auto p : serversSet) {
+				std::cout << p.first << " : " << p.second << "\n";
 			}
 		}
+
 		if (ImGui::Button("Exit")) {
 			state = State::QUIT;
 		}
-		if (connectState == ConnectionState::FAIL) {
-			ImGui::Text("Invalid IP address!");
+
+		if (discoverState == DiscoverState::SUCCESS) {
+			ImGui::Combo("##MyDynamicCombo", &currentItem, ipAndHostnameList, static_cast<int>(serversSet.size()));
+
+			if (ImGui::Button("Connect")) {
+				strcpy(ip, ipList[currentItem]);
+				if (initClientSocket(imageSocket, ip, imagePort)) {
+					connectState = ConnectionState::SUCCESS;
+				}
+				else {
+					connectState = ConnectionState::FAIL;
+				}
+			}
+
+			if (connectState == ConnectionState::FAIL) {
+				ImGui::Text("Invalid IP address!");
+			}
+			else if (connectState == ConnectionState::SUCCESS) {
+				state = State::INIT_CONTENT;
+			}
 		}
-		else if (connectState == ConnectionState::SUCCESS) {
-			state = State::INIT_CONTENT;
-		}
+		
 	}
 	ImGui::End();
 

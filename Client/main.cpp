@@ -33,6 +33,7 @@ SOCKET imageSocket, mouseSocket, keyboardSocket;
 
 State state = State::CONNECT_MENU;
 ConnectionState connectState = ConnectionState::NOT_YET;
+DiscoverState discoverState = DiscoverState::NOT_YET;
 
 int main(int argc, char** argv) {
     initUI();

@@ -74,6 +74,7 @@ int main(int argc, char** agrv) {
                 std::thread sendImageThread(captureAndSendImage, acceptImageSocket, header);
                 sendImageThread.detach();
             }
+            break;
 
         case State::DISPLAY_CONTROL_PANEL:
             displayControlPanel();
