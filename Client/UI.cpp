@@ -110,7 +110,7 @@ void createServersList() {
 	}
 }
 
-void displayConnectPanel() {
+void displayConnectMenu() {
 
 	ImGui_ImplSDLRenderer2_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);
@@ -120,7 +120,7 @@ void displayConnectPanel() {
 
     if (ImGui::Begin("Connect to server", NULL, ImGuiWindowFlags_NoResize)) {
 
-		ImGui::Text("Server's IP address:");
+		ImGui::Text("Brodcast address:");
 
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
 
@@ -155,7 +155,7 @@ void displayConnectPanel() {
 				ImGui::Text("Invalid IP address!");
 			}
 			else if (connectState == ConnectionState::SUCCESS) {
-				state = State::INIT_CONTENT;
+				state = State::START_THREADS;
 			}
 		}
 		
@@ -193,14 +193,10 @@ void renderImage(cv::Mat image) {
 
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(0));
 }
 
 void receiveAndDisplayImage() {
     while (state != State::QUIT) {
-		auto start = std::chrono::high_resolution_clock::now();
-
 		cv::Mat image = receiveImage();
 
         renderImage(image);
@@ -208,9 +204,5 @@ void receiveAndDisplayImage() {
 		renderControlPanel();
 
 		SDL_RenderPresent(renderer);
-
-		auto stop = std::chrono::high_resolution_clock::now();
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-		std::cout << "FPS: " << 1000.0 / duration.count() << "\n";
 	}
 }

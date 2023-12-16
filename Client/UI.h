@@ -2,8 +2,8 @@
 #include <opencv2/opencv.hpp>
 
 enum class State {
-	CONNECT_MENU,
-	INIT_CONTENT,
+	DISPLAY_CONNECT_MENU,
+	START_THREADS,
 	DISPLAY_IMAGE,
 	QUIT,
 };
@@ -21,7 +21,7 @@ enum class DiscoverState {
 
 void initUI();
 void freeUI();
-void displayConnectPanel();
+void displayConnectMenu();
 void renderControlPanel();
 void renderImage(cv::Mat image);
 void receiveAndDisplayImage();

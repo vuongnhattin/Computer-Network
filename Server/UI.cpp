@@ -11,7 +11,6 @@
 #include <iostream>
 #pragma comment (lib, "ws2_32.lib")
 
-
 void broadcastS() {
     SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in serverHint;
