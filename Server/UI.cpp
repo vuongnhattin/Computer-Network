@@ -11,46 +11,8 @@
 #include <iostream>
 #pragma comment (lib, "ws2_32.lib")
 
-void broadcastS() {
-    SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
-    sockaddr_in serverHint;
-    ZeroMemory(&serverHint, sizeof(serverHint));
-    serverHint.sin_addr.S_un.S_addr = ADDR_ANY;
-    serverHint.sin_family = AF_INET;
-    serverHint.sin_port = htons(broadcastPort);
-    if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
-    {
-        std::cout << "Can't bind socket! " << WSAGetLastError() << "\n";
-        return;
-    }
-    sockaddr_in client;
-    int clientLength = sizeof(client);
-    char buf[1024];
-    std::cout << "waiting for name req from client broadcast.\n";
-    while (connectionState != ConnectionState::CONNECTED)
-    {
-        ZeroMemory(&client, clientLength);
-        ZeroMemory(buf, 1024);
-        int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
-        if (bytesIn == SOCKET_ERROR)
-        {
-            std::cout << "Error receiving from client " << WSAGetLastError() << "\n";
-            continue;
-        }
-        char clientIp[256];
-        ZeroMemory(clientIp, 256);
-        inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
-        std::cout << "Message recv from " << clientIp << " : " << buf << "\n";
-        char computerName[100]{ 0 };
-        gethostname(computerName, 100);
-        sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
-    }
-    closesocket(in);
-}
-
-
 void initUI() {
-    const double scale = 0.8;
+    const double scale = 0.2;
     int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
 
     screenRect = { 0, 0, appWidth, appHeight };
@@ -143,7 +105,6 @@ void displayControlPanel() {
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
-    //ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetWindowSize(ImVec2(200, 100));
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {

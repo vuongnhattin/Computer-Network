@@ -59,11 +59,10 @@ void receiveImageACK(SOCKET acceptImageSocket) {
 	}
 }
 
-void captureAndSendImage(SOCKET acceptImageSocket ,HeaderScreenshot header) {
+void captureAndSendImage(SOCKET acceptImageSocket, HeaderScreenshot header) {
     while (state != State::QUIT) {
         auto start = high_resolution_clock::now();
         cv::Mat frame = capture(header);
-        //cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(stop - start);
         std::cout << "capture() took: " << duration.count() << "ms\n";
