@@ -135,7 +135,7 @@ void displayConnectMenu() {
 		}
 
 		if (ImGui::Button("Exit")) {
-			state = State::QUIT;
+			uiState = UIState::QUIT;
 		}
 
 		if (discoverState == DiscoverState::SUCCESS) {
@@ -155,7 +155,7 @@ void displayConnectMenu() {
 				ImGui::Text("Invalid IP address!");
 			}
 			else if (connectState == ConnectionState::SUCCESS) {
-				state = State::START_THREADS;
+				uiState = UIState::START_THREADS;
 			}
 		}
 		
@@ -176,7 +176,7 @@ void renderControlPanel() {
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
         if (ImGui::Button("Exit")) {
-			state = State::QUIT;
+			uiState = UIState::QUIT;
         }
     }
     ImGui::End();
@@ -196,7 +196,7 @@ void renderImage(cv::Mat image) {
 }
 
 void receiveAndDisplayImage() {
-    while (state != State::QUIT) {
+    while (uiState != UIState::QUIT) {
 		cv::Mat image = receiveImage();
 
         renderImage(image);

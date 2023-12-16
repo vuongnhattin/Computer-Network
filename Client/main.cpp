@@ -31,27 +31,27 @@ SDL_Rect screenRect;
 
 SOCKET imageSocket, mouseSocket, keyboardSocket;
 
-State state = State::DISPLAY_CONNECT_MENU;
+UIState uiState = UIState::DISPLAY_CONNECT_MENU;
 ConnectionState connectState = ConnectionState::NOT_YET;
 DiscoverState discoverState = DiscoverState::NOT_YET;
 
 int main(int argc, char** argv) {
     initUI();
 
-    while (state != State::QUIT) {
+    while (uiState != UIState::QUIT) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                state = State::QUIT;
+                uiState = UIState::QUIT;
             }
             ImGui_ImplSDL2_ProcessEvent(&event);
         }
 
-        switch (state) {
-        case State::DISPLAY_CONNECT_MENU:
+        switch (uiState) {
+        case UIState::DISPLAY_CONNECT_MENU:
             displayConnectMenu();
             break;
 
-        case State::START_THREADS:
+        case UIState::START_THREADS:
             getServerScreenResolution();
 
             initClientSocket(mouseSocket, ip, mousePort);
@@ -68,10 +68,10 @@ int main(int argc, char** argv) {
                 imageThread.detach();
             }
 
-            state = State::DISPLAY_IMAGE;
+            uiState = UIState::DISPLAY_IMAGE;
             break;
 
-        case State::DISPLAY_IMAGE: break;
+        case UIState::DISPLAY_IMAGE: break;
 
         default:
             break;

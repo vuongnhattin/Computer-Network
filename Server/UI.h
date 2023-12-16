@@ -1,7 +1,7 @@
 #pragma once
 #include <WinSock2.h>
 
-enum class State {
+enum class UIState {
 	DISPLAY_CONNECTION_MENU,
 	START_THREADS,
 	DISPLAY_CONTROL_PANEL,

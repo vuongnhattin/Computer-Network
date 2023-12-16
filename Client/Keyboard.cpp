@@ -137,7 +137,7 @@ void sendKeyboardEvents() {
 	}
 
 	MSG msg;
-    while (state != State::QUIT && GetMessage(&msg, NULL, 0, 0) != 0) {
+    while (uiState != UIState::QUIT && GetMessage(&msg, NULL, 0, 0) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

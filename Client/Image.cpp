@@ -13,7 +13,7 @@ cv::Mat decompressImage(std::vector<char> buffer) {
 }
 
 void sendImageACK() {
-	if (state == State::QUIT) send(imageSocket, "NO", 2, 0);
+	if (uiState == UIState::QUIT) send(imageSocket, "NO", 2, 0);
 	else send(imageSocket, "OK", 2, 0);
 }
 

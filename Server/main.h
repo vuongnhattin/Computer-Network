@@ -20,6 +20,6 @@ extern SOCKET imageSocket, acceptImageSocket;
 extern SOCKET mouseSocket, acceptMouseSocket;
 extern SOCKET keyboardSocket, acceptKeyboardSocket;
 
-extern State state;
+extern UIState uiState;
 extern BindingState bindingState;
 extern ConnectionState connectionState;

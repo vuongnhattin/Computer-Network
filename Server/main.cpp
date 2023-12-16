@@ -36,7 +36,7 @@ SDL_Renderer* renderer;
 SDL_Rect screenRect;
 SDL_Event event;
 
-State state = State::DISPLAY_CONNECTION_MENU;
+UIState uiState = UIState::DISPLAY_CONNECTION_MENU;
 BindingState bindingState = BindingState::BINDING;
 ConnectionState connectionState = ConnectionState::NOT_YET;
 
@@ -44,21 +44,21 @@ int main(int argc, char** agrv) {
     initUI();
     initHeaderScreenshot(header);
 
-    while (state != State::QUIT) {
+    while (uiState != UIState::QUIT) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                state = State::QUIT;
+                uiState = UIState::QUIT;
             }
             ImGui_ImplSDL2_ProcessEvent(&event);
         }
 
-        switch (state) {
-        case State::DISPLAY_CONNECTION_MENU:
+        switch (uiState) {
+        case UIState::DISPLAY_CONNECTION_MENU:
             displayConnectMenu();
             break;
             
-        case State::START_THREADS:
-            state = State::DISPLAY_CONTROL_PANEL;
+        case UIState::START_THREADS:
+            uiState = UIState::DISPLAY_CONTROL_PANEL;
             sendScreenResolution(acceptImageSocket, screenWidth, screenHeight);
 
             initServerSocket(mouseSocket, acceptMouseSocket, ip, mousePort);
@@ -76,7 +76,7 @@ int main(int argc, char** agrv) {
             }
             break;
 
-        case State::DISPLAY_CONTROL_PANEL:
+        case UIState::DISPLAY_CONTROL_PANEL:
             displayControlPanel();
             break;
         }

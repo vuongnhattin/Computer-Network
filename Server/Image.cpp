@@ -55,12 +55,12 @@ void receiveImageACK(SOCKET acceptImageSocket) {
 	char ack[3];
 	recv(acceptImageSocket, ack, 3, 0);
     if (strcmp(ack, "NO") == 0) {
-        state = State::QUIT;
+        uiState = UIState::QUIT;
 	}
 }
 
 void captureAndSendImage(SOCKET acceptImageSocket, HeaderScreenshot header) {
-    while (state != State::QUIT) {
+    while (uiState != UIState::QUIT) {
         auto start = high_resolution_clock::now();
         cv::Mat frame = capture(header);
         auto stop = high_resolution_clock::now();

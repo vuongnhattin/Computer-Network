@@ -20,6 +20,6 @@ extern SDL_Rect screenRect;
 #define mousePort 55556
 #define keyboardPort 55557
 
-extern State state;
+extern UIState uiState;
 extern ConnectionState connectState;
 extern DiscoverState discoverState;

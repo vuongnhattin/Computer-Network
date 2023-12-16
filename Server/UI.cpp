@@ -42,7 +42,7 @@ void freeUI() {
 void waitingForConnection(SOCKET& serverSocket, SOCKET& acceptSocket) {
     listenSocket(serverSocket, acceptSocket);
     connectionState = ConnectionState::CONNECTED;
-    state = State::START_THREADS;
+    uiState = UIState::START_THREADS;
 }
 
 void displayConnectMenu() {
@@ -87,7 +87,7 @@ void displayConnectMenu() {
         }
         ImGui::Separator();
         if (ImGui::Button("Exit")) {
-            state = State::QUIT;
+            uiState = UIState::QUIT;
         }
     }
 
@@ -109,7 +109,7 @@ void displayControlPanel() {
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
         if (ImGui::Button("Exit")) {
-            state = State::QUIT;
+            uiState = UIState::QUIT;
         }
     }
     ImGui::End();

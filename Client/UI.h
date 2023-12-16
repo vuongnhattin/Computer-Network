@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 
-enum class State {
+enum class UIState {
 	DISPLAY_CONNECT_MENU,
 	START_THREADS,
 	DISPLAY_IMAGE,
