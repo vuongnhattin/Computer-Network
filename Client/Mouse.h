@@ -2,6 +2,7 @@
 #include <WinSock2.h>
 #include <SDL.h>
 
+
 struct MouseEvent {
     DWORD mouseX = 0;
     DWORD mouseY = 0;

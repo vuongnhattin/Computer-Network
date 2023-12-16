@@ -2,6 +2,10 @@
 #include "main.h"
 
 const int BUF_SIZE = 20;
+MouseEvent mouseEvent;
+bool prevLeft = 0;
+bool prevRight = 0;
+bool prevMiddle = 0;
 
 // Function to simulate a key event
 void simulateMouseEvent(const char* serializedData) {
@@ -9,41 +13,42 @@ void simulateMouseEvent(const char* serializedData) {
     INPUT ip;
     ZeroMemory(&ip, sizeof(INPUT));
     ip.type = INPUT_MOUSE;
-
+    prevLeft = mouseEvent.leftMouseDown;
+    prevRight = mouseEvent.rightMouseDown;
+    prevMiddle = mouseEvent.middleMouseDown;
     // Parse the serialized data
-    MouseEvent event;
-    memcpy(&event, serializedData, sizeof(MouseEvent));
+    memcpy(&mouseEvent, serializedData, sizeof(MouseEvent));
 
     ip.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
-    ip.mi.dx = (event.mouseX * 65535) / GetSystemMetrics(SM_CXSCREEN);
-    ip.mi.dy = (event.mouseY * 65535) / GetSystemMetrics(SM_CYSCREEN);
+    ip.mi.dx = (mouseEvent.mouseX * 65535) / GetSystemMetrics(SM_CXSCREEN);
+    ip.mi.dy = (mouseEvent.mouseY * 65535) / GetSystemMetrics(SM_CYSCREEN);
 
     // Simulate the key event
-    if (event.leftMouseDown)
-        ip.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
-    if (event.rightMouseDown)
-        ip.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
-    if (event.middleMouseDown)
-        ip.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
-    if (event.mouseWheelDelta != 0) {
-        ip.mi.dwFlags |= MOUSEEVENTF_WHEEL;
-        ip.mi.mouseData = event.mouseWheelDelta;
+    if (mouseEvent.leftMouseDown != prevLeft) {
+        if (mouseEvent.leftMouseDown)
+            ip.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+        else
+            ip.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
     }
-    if (event.move) {
+    if (mouseEvent.rightMouseDown != prevRight) {
+        if (mouseEvent.rightMouseDown)
+            ip.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
+        else
+            ip.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
+    }
+    if (mouseEvent.middleMouseDown != prevMiddle) {
+        if (mouseEvent.middleMouseDown)
+            ip.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
+        else
+            ip.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
+    }
+    if (mouseEvent.mouseWheelDelta != 0) {
+        ip.mi.dwFlags |= MOUSEEVENTF_WHEEL;
+        ip.mi.mouseData = mouseEvent.mouseWheelDelta;
+    }
+    if (mouseEvent.move) {
         ip.mi.dwFlags |= MOUSEEVENTF_MOVE;
     }
-
-    SendInput(1, &ip, sizeof(INPUT));
-
-    ip.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
-    ip.mi.dx = (event.mouseX * 65535) / GetSystemMetrics(SM_CXSCREEN);
-    ip.mi.dy = (event.mouseY * 65535) / GetSystemMetrics(SM_CYSCREEN);
-    if (event.leftMouseDown)
-        ip.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-    if (event.rightMouseDown)
-        ip.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-    if (event.middleMouseDown)
-        ip.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
     SendInput(1, &ip, sizeof(INPUT));
 }
 
