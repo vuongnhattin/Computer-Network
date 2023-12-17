@@ -112,12 +112,12 @@ void broadcastS() {
         sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
     }
     closesocket(in);
+    std::cout << "shut down broadcast socket.\n";
 }
 
 void sendScreenResolution(SOCKET acceptSocket, int width, int height) {
     std::string widthStr = std::to_string(width);
     std::string heightStr = std::to_string(height);
-
 	send(acceptSocket, widthStr.c_str(), 10, 0);
     send(acceptSocket, heightStr.c_str(), 10, 0);
 }

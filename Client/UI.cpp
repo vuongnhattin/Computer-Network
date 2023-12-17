@@ -29,7 +29,7 @@ void broadcastC(char *ip) {
 
 	SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 	struct timeval tv;
-	tv.tv_sec = 1;  // 1 second timeout
+	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
@@ -60,10 +60,11 @@ void broadcastC(char *ip) {
 		std::pair<std::string, std::string> tmp(tmpIP, tmpName);
 		serversSet.insert(tmp);
 	}
-
+	closesocket(sock);
 }
 
 void initUI() {
+	serversSet.clear();
 	SDL_Init(SDL_INIT_VIDEO);
 
 	const double scale = 1;
@@ -175,8 +176,8 @@ void renderControlPanel() {
 
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
-        if (ImGui::Button("Exit")) {
-			uiState = UIState::QUIT;
+        if (ImGui::Button("Disconnect")) {
+			uiState = UIState::STOP;
         }
     }
     ImGui::End();
@@ -196,13 +197,22 @@ void renderImage(cv::Mat image) {
 }
 
 void receiveAndDisplayImage() {
-    while (uiState != UIState::QUIT) {
-		cv::Mat image = receiveImage();
-
+	bool disconnectReq = false;
+    while (uiState == UIState::DISPLAY_IMAGE) {
+		cv::Mat image;
+		disconnectReq = !receiveImage(image);
+		if (disconnectReq) {
+			uiState = UIState::STOP;
+			std::cout << "shut down image thread.\n";
+			return;
+		}
         renderImage(image);
+		std::cout << "rendered image.\n";
 
 		renderControlPanel();
 
 		SDL_RenderPresent(renderer);
 	}
+	sendImageACK();
+	std::cout << "shut down image thread.\n";
 }

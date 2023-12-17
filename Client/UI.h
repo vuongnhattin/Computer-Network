@@ -6,6 +6,7 @@ enum class UIState {
 	START_THREADS,
 	DISPLAY_IMAGE,
 	QUIT,
+	STOP,
 };
 
 enum class ConnectionState {

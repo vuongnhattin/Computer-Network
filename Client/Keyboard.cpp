@@ -22,6 +22,12 @@ void serializeEvent(const KeyEvent& event, char* buffer) {
 HHOOK keyboardHookHandle;
 
 LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
+    if (uiState != UIState::DISPLAY_IMAGE) {
+        PostQuitMessage(0);
+        UnhookWindowsHookEx(keyboardHookHandle);
+        std::cout << "unhooked keyboard\n";
+        return 0;
+    }
     static bool ctrlPressed = false;
     static bool shiftPressed = false;
     static bool altPressed = false;
@@ -96,6 +102,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
         int sent;
         do {
             sent = send(keyboardSocket, buffer, BUF_SIZE, 0);
+            std::cout << "keyboard event detected.\n";
             if (sent == SOCKET_ERROR) {
                 int error = WSAGetLastError();
                 if (error != WSAEWOULDBLOCK) {
@@ -124,6 +131,7 @@ LRESULT CALLBACK keyboardHook(int code, WPARAM wParam, LPARAM lParam) {
                 serializeEvent(event, buffer);
             }
         }
+        return 1;
     }
 
     return CallNextHookEx(keyboardHookHandle, code, wParam, lParam);
@@ -137,10 +145,10 @@ void sendKeyboardEvents() {
 	}
 
 	MSG msg;
-    while (uiState != UIState::QUIT && GetMessage(&msg, NULL, 0, 0) != 0) {
+    while (uiState == UIState::DISPLAY_IMAGE && GetMessage(&msg, NULL, 0, 0) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-
-	UnhookWindowsHookEx(keyboardHookHandle);
+    std::cout << "shut down keyboard thread\n";
+	//UnhookWindowsHookEx(keyboardHookHandle);
 }

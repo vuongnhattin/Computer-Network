@@ -6,6 +6,7 @@ enum class UIState {
 	START_THREADS,
 	DISPLAY_CONTROL_PANEL,
 	QUIT,
+	STOP,
 };
 
 enum class BindingState {

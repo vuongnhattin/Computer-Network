@@ -55,25 +55,25 @@ void receiveImageACK(SOCKET acceptImageSocket) {
 	char ack[3];
 	recv(acceptImageSocket, ack, 3, 0);
     if (strcmp(ack, "NO") == 0) {
-        uiState = UIState::QUIT;
+        uiState = UIState::STOP;
 	}
 }
 
 void captureAndSendImage(SOCKET acceptImageSocket, HeaderScreenshot header) {
-    while (uiState != UIState::QUIT) {
-        auto start = high_resolution_clock::now();
+    while (uiState == UIState::DISPLAY_CONTROL_PANEL) {
+        //auto start = high_resolution_clock::now();
         cv::Mat frame = capture(header);
-        auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(stop - start);
-        std::cout << "capture() took: " << duration.count() << "ms\n";
+        //auto stop = high_resolution_clock::now();
+        //auto duration = duration_cast<milliseconds>(stop - start);
+        //std::cout << "capture() took: " << duration.count() << "ms\n";
         
-        start = high_resolution_clock::now();
+        //start = high_resolution_clock::now();
 
         std::vector<uchar> compressed = compressImage(frame, 80);
 
-        stop = high_resolution_clock::now();
-        duration = duration_cast<milliseconds>(stop - start);
-        std::cout << "compress() took: " << duration.count() << "ms\n";
+        //stop = high_resolution_clock::now();
+        //duration = duration_cast<milliseconds>(stop - start);
+        //std::cout << "compress() took: " << duration.count() << "ms\n";
 
         int size = compressed.size();
         int byteSent = send(acceptImageSocket, (char*)&size, sizeof(int), 0);
@@ -83,15 +83,19 @@ void captureAndSendImage(SOCKET acceptImageSocket, HeaderScreenshot header) {
             exit(-1);
         }
 
-        std::cout << "Sent: " << byteSent << " bytes\n";
+        //std::cout << "Sent: " << byteSent << " bytes\n";
         byteSent = send(acceptImageSocket, (char*)&compressed[0], compressed.size(), 0);
         if (byteSent < 0) {
-            std::cout << "Could not send compressed.data()!\n";
+            //std::cout << "Could not send compressed.data()!\n";
             WSACleanup();
             exit(-1);
         }
-        std::cout << "Sent: " << byteSent << " bytes\n";
+        //std::cout << "Sent: " << byteSent << " bytes\n";
 
         receiveImageACK(acceptImageSocket);
     }
+    //send disconnect request
+    int disconnectCode = -10;
+    send(acceptImageSocket, (char*) & disconnectCode, sizeof(int), 0);
+    std::cout << "shut down handle image.\n";
 }

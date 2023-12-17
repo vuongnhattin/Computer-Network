@@ -12,7 +12,7 @@
 #pragma comment (lib, "ws2_32.lib")
 
 void initUI() {
-    const double scale = 0.2;
+    const double scale = 0.4;
     int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
 
     screenRect = { 0, 0, appWidth, appHeight };
@@ -108,8 +108,8 @@ void displayControlPanel() {
     ImGui::SetWindowSize(ImVec2(200, 100));
     ImGui::SetNextWindowSize(ImVec2(200, 100));
     if (ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoResize)) {
-        if (ImGui::Button("Exit")) {
-            uiState = UIState::QUIT;
+        if (ImGui::Button("Disconnect")) {
+            uiState = UIState::STOP;
         }
     }
     ImGui::End();

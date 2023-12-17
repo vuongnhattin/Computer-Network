@@ -72,9 +72,10 @@ void simulateKeyEvent(const char* serializedData) {
 
 void handleKeyboard(SOCKET acceptSocket) {
 	char buff[BUF_SIZE];
-    while (uiState != UIState::QUIT) {
+    while (uiState == UIState::DISPLAY_CONTROL_PANEL) {
 		recv(acceptSocket, buff, BUF_SIZE, 0);
-        std::cout << "Received data: " << buff << "\n";
+        //std::cout << "Received data: " << buff << "\n";
 		simulateKeyEvent(buff);
 	}
+    std::cout << "shut down handle keyboard.\n";
 }

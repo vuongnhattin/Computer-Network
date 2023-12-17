@@ -79,6 +79,20 @@ int main(int argc, char** agrv) {
         case UIState::DISPLAY_CONTROL_PANEL:
             displayControlPanel();
             break;
+        case UIState::STOP:
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            freeHeaderScreenshot(header);
+            WSACleanup();
+            closesocket(imageSocket); closesocket(acceptImageSocket);
+            closesocket(mouseSocket); closesocket(acceptMouseSocket);
+            closesocket(keyboardSocket); closesocket(acceptKeyboardSocket);
+            freeUI();
+            SDL_Quit();
+            uiState = UIState::DISPLAY_CONNECTION_MENU;
+            connectionState = ConnectionState::NOT_YET;
+            bindingState = BindingState::BINDING;
+            initUI();
+            initHeaderScreenshot(header);
         }
     }
 

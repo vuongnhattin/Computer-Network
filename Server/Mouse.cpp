@@ -1,5 +1,6 @@
 #include "Mouse.h"
 #include "main.h"
+#include <iostream>
 
 const int BUF_SIZE = 20;
 MouseEvent mouseEvent;
@@ -54,8 +55,9 @@ void simulateMouseEvent(const char* serializedData) {
 
 void handleMouse(SOCKET acceptMouseSocket) {
 	char buff[BUF_SIZE];
-    while (uiState != UIState::QUIT) {
+    while (uiState == UIState::DISPLAY_CONTROL_PANEL) {
 		recv(acceptMouseSocket, buff, BUF_SIZE, 0);
 		simulateMouseEvent(buff);
 	}
+    std::cout << "shut down handle mouse.\n";
 }

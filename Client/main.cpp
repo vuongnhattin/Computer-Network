@@ -73,6 +73,19 @@ int main(int argc, char** argv) {
 
         case UIState::DISPLAY_IMAGE: break;
 
+        case UIState::STOP:
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            WSACleanup();
+            closesocket(imageSocket);
+            closesocket(mouseSocket);
+            closesocket(keyboardSocket);
+            freeUI();
+            SDL_Quit();
+            std::cout << "Disconected.\n";
+            uiState = UIState::DISPLAY_CONNECT_MENU;
+            connectState = ConnectionState::NOT_YET;
+            discoverState = DiscoverState::NOT_YET;
+            initUI();
         default:
             break;
         }

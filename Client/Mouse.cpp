@@ -33,6 +33,11 @@ void printEvent(const MouseEvent& event) {
     std::cout << "Move: " << event.move << std::endl;
 }
 LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
+    if (uiState != UIState::DISPLAY_IMAGE) {
+        PostQuitMessage(0);
+        UnhookWindowsHookEx(MouseHookHandle);
+        return 0;
+    }
     const double screenRatio = serverScreenWidth * 1.0 / screenWidth;
     if (code == HC_ACTION) {
         MSLLHOOKSTRUCT* ms = (MSLLHOOKSTRUCT*)lParam;
@@ -78,7 +83,8 @@ LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
         int sent;
         do {
             sent = send(mouseSocket, buffer, BUF_SIZE, 0);
-            printEvent(mouseEvent);
+            //printEvent(mouseEvent);
+            std::cout << "mouse event detected.\n";
             if (sent == SOCKET_ERROR) {
                 int error = WSAGetLastError();
                 if (error != WSAEWOULDBLOCK) {
@@ -108,10 +114,10 @@ void sendMouseEvents() {
 	}
 
 	MSG msg;
-    while (uiState != UIState::QUIT && GetMessage(&msg, NULL, 0, 0) != 0) {
+    while (uiState == UIState::DISPLAY_IMAGE && GetMessage(&msg, NULL, 0, 0) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-
-	UnhookWindowsHookEx(MouseHookHandle);
+    std::cout << "shut down mouse thread.\n";
+	//UnhookWindowsHookEx(MouseHookHandle);
 }
