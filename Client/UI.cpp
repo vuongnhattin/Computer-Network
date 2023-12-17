@@ -112,7 +112,6 @@ void createServersList() {
 }
 
 void displayConnectMenu() {
-
 	ImGui_ImplSDLRenderer2_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
@@ -140,6 +139,8 @@ void displayConnectMenu() {
 		}
 
 		if (discoverState == DiscoverState::SUCCESS) {
+			std::string discoveringInfo = "Discovered " + std::to_string(serversSet.size()) + " servers";
+			ImGui::Text(discoveringInfo.c_str());
 			ImGui::Combo("##MyDynamicCombo", &currentItem, ipAndHostnameList, static_cast<int>(serversSet.size()));
 
 			if (ImGui::Button("Connect")) {

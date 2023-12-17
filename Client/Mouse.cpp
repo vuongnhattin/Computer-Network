@@ -38,7 +38,8 @@ LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
         UnhookWindowsHookEx(MouseHookHandle);
         return 0;
     }
-    const double screenRatio = serverScreenWidth * 1.0 / screenWidth;
+    const double screenWidthRatio = serverScreenWidth * 1.0 / screenWidth;
+    const double screenHeightRatio = serverScreenHeight * 1.0 / screenHeight;
     if (code == HC_ACTION) {
         MSLLHOOKSTRUCT* ms = (MSLLHOOKSTRUCT*)lParam;
         char buffer[BUF_SIZE];
@@ -64,8 +65,8 @@ LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
             break;
         case WM_MOUSEMOVE:
             mouseEvent.move = true;
-            mouseEvent.mouseX = (DWORD)(ms->pt.x * screenRatio);
-            mouseEvent.mouseY = (DWORD)(ms->pt.y * screenRatio);
+            mouseEvent.mouseX = (DWORD)(ms->pt.x * screenWidthRatio);
+            mouseEvent.mouseY = (DWORD)(ms->pt.y * screenHeightRatio);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             break;
         case WM_MOUSEWHEEL:
@@ -101,6 +102,9 @@ LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
         if (mouseEvent.move) {
             mouseEvent.move = false;
         }
+        if (mouseEvent.mouseWheelDelta != 0) {
+			mouseEvent.mouseWheelDelta = 0;
+		}
     }
 
     return CallNextHookEx(MouseHookHandle, code, wParam, lParam);
