@@ -168,7 +168,7 @@ void displayConnectMenu() {
 
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
 		
-		ImGui::Text("Subnet Mask (Optional):");
+		ImGui::Text("Subnet Mask:");
 		ImGui::InputText("##SN", sn, IM_ARRAYSIZE(sn));
 		
 		if (ImGui::Button("Discover Servers")) {
