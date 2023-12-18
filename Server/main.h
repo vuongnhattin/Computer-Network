@@ -23,3 +23,4 @@ extern SOCKET keyboardSocket, acceptKeyboardSocket;
 extern UIState uiState;
 extern BindingState bindingState;
 extern ConnectionState connectionState;
+extern DiscoveryState discoveryState;

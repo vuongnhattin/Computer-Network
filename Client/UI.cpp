@@ -40,9 +40,7 @@ void broadcastC(char *ip) {
 		std::cout << "error at socket()\n";
 		return;
 	}
-	char sendBuf[] = "req name";
-	int sendBufLen = strlen(sendBuf) + 1;	
-	if (sendto(sock, sendBuf, sendBufLen, 0,(sockaddr*)&serverHint, sizeof(serverHint))== SOCKET_ERROR) {
+	if (sendto(sock, sn, 16, 0,(sockaddr*)&serverHint, sizeof(serverHint))== SOCKET_ERROR) {
 		std::cout << "error at sendto()\n";
 	}
 	int max_attempt = 10;
@@ -59,7 +57,6 @@ void broadcastC(char *ip) {
 		inet_ntop(AF_INET, &recvAddr.sin_addr, tmpIPbuf, 20);
 		std::string tmpIP(tmpIPbuf);
 		std::string tmpName(recvBuf);
-		//add server to serversSet
 		std::pair<std::string, std::string> tmp(tmpIP, tmpName);
 		serversSet.insert(tmp);
 	}
@@ -75,7 +72,7 @@ void initUI() {
 
 	screenRect = { 0, 0, appWidth, appHeight };
 
-	window = SDL_CreateWindow("Client", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, appWidth, appHeight, 0);
+	window = SDL_CreateWindow("Remote Desktop Control", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, appWidth, appHeight, 0);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 	IMGUI_CHECKVERSION();
@@ -164,11 +161,11 @@ void displayConnectMenu() {
 
     if (ImGui::Begin("Connect to server", NULL, ImGuiWindowFlags_NoResize)) {
 
-		ImGui::Text("IP Address:");
+		ImGui::Text("IP Address of your computer:");
 
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
 		
-		ImGui::Text("Subnet Mask:");
+		ImGui::Text("Subnet Mask of your computer:");
 		ImGui::InputText("##SN", sn, IM_ARRAYSIZE(sn));
 		
 		if (ImGui::Button("Discover Servers")) {
@@ -182,7 +179,6 @@ void displayConnectMenu() {
 			}
 		}
 
-		
 		if (discoverState == DiscoverState::SUCCESS) {
 			std::string discoveringInfo = "Discovered " + std::to_string(serversSet.size()) + " servers";
 			ImGui::Text(discoveringInfo.c_str());

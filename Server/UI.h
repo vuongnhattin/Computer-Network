@@ -21,6 +21,13 @@ enum class ConnectionState {
 	CONNECTED,
 };
 
+enum class DiscoveryState {
+	NOT_YET,
+	DISCOVERING,
+	SUCCESS,
+	NONE,
+};
+
 void initUI();
 void freeUI();
 void displayConnectMenu();

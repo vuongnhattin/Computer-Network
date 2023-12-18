@@ -79,13 +79,13 @@ int main(int argc, char** argv) {
             closesocket(imageSocket);
             closesocket(mouseSocket);
             closesocket(keyboardSocket);
-            freeUI();
-            SDL_Quit();
+            //freeUI();
+            //SDL_Quit();
             std::cout << "Disconected.\n";
             uiState = UIState::DISPLAY_CONNECT_MENU;
             connectState = ConnectionState::NOT_YET;
-            discoverState = DiscoverState::NOT_YET;
-            initUI();
+            discoverState = DiscoverState::SUCCESS;
+            //initUI();
         default:
             break;
         }
