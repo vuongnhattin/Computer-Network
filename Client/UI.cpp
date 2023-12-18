@@ -22,7 +22,7 @@ int currentItem = 0;
 char sn[16] = "";
 char br[16] = "";
 
-void broadcastC(char *ip) {
+void broadcastC(char* ip) {
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 	sockaddr_in serverHint;
@@ -41,12 +41,12 @@ void broadcastC(char *ip) {
 		return;
 	}
 	char sendBuf[] = "req name";
-	int sendBufLen = strlen(sendBuf) + 1;	
-	if (sendto(sock, sendBuf, sendBufLen, 0,(sockaddr*)&serverHint, sizeof(serverHint))== SOCKET_ERROR) {
+	int sendBufLen = strlen(sendBuf) + 1;
+	if (sendto(sock, sendBuf, sendBufLen, 0, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR) {
 		std::cout << "error at sendto()\n";
 	}
 	int max_attempt = 10;
-	for (int attempt = 0; attempt < max_attempt;attempt++) {
+	for (int attempt = 0; attempt < max_attempt; attempt++) {
 		sockaddr_in recvAddr;
 		int recvAddrLen = sizeof(recvAddr);
 		char recvBuf[100]{ 0 };
@@ -62,9 +62,13 @@ void broadcastC(char *ip) {
 		//add server to serversSet
 		std::pair<std::string, std::string> tmp(tmpIP, tmpName);
 		serversSet.insert(tmp);
+		//
+		for (int i = 0; i < 50; i++)
+			sendto(sock, tmpIP.c_str(), tmpIP.size() + 1, 0, (sockaddr*)&recvAddr, recvAddrLen);
 	}
 	closesocket(sock);
 }
+
 
 void initUI() {
 	serversSet.clear();
@@ -168,7 +172,7 @@ void displayConnectMenu() {
 
 		ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
 		
-		ImGui::Text("Subnet Mask (Optional):");
+		ImGui::Text("Subnet Mask:");
 		ImGui::InputText("##SN", sn, IM_ARRAYSIZE(sn));
 		
 		if (ImGui::Button("Discover Servers")) {

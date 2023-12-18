@@ -77,51 +77,51 @@ bool initServerSocket(SOCKET& serverSocket, SOCKET& acceptSocket, const char* ip
     return (bindSocket(serverSocket, ip, port) && listenSocket(serverSocket, acceptSocket));
 }
 
-void broadcastS() {
-    WSAData data;
-    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-        std::cout << "WSAStartup fail!\n";
-        return;
-    }
-    else {
-        std::cout << "WSAStartup ok!\n";
-    }
-    SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
-    sockaddr_in serverHint;
-    ZeroMemory(&serverHint, sizeof(serverHint));
-    serverHint.sin_addr.S_un.S_addr = ADDR_ANY;
-    serverHint.sin_family = AF_INET;
-    serverHint.sin_port = htons(broadcastPort);
-    if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
-    {
-        std::cout << "Can't bind socket! " << WSAGetLastError() << "\n";
-        return;
-    }
-    sockaddr_in client;
-    int clientLength = sizeof(client);
-    char buf[1024];
-    std::cout << "waiting for name req from client broadcast.\n";
-    while (connectionState != ConnectionState::CONNECTED)
-    {
-        ZeroMemory(&client, clientLength);
-        ZeroMemory(buf, 1024);
-        int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
-        if (bytesIn == SOCKET_ERROR)
-        {
-            std::cout << "Error receiving from client " << WSAGetLastError() << "\n";
-            continue;
-        }
-        char clientIp[256];
-        ZeroMemory(clientIp, 256);
-        inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
-        std::cout << "Message recv from " << clientIp << " : " << buf << "\n";
-        char computerName[100]{ 0 };
-        gethostname(computerName, 100);
-        sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
-    }
-    closesocket(in);
-    std::cout << "shut down broadcast socket.\n";
-}
+//void broadcastS() {
+//    WSAData data;
+//    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
+//        std::cout << "WSAStartup fail!\n";
+//        return;
+//    }
+//    else {
+//        std::cout << "WSAStartup ok!\n";
+//    }
+//    SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
+//    sockaddr_in serverHint;
+//    ZeroMemory(&serverHint, sizeof(serverHint));
+//    serverHint.sin_addr.S_un.S_addr = ADDR_ANY;
+//    serverHint.sin_family = AF_INET;
+//    serverHint.sin_port = htons(broadcastPort);
+//    if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
+//    {
+//        std::cout << "Can't bind socket! " << WSAGetLastError() << "\n";
+//        return;
+//    }
+//    sockaddr_in client;
+//    int clientLength = sizeof(client);
+//    char buf[1024];
+//    std::cout << "waiting for name req from client broadcast.\n";
+//    while (connectionState != ConnectionState::CONNECTED)
+//    {
+//        ZeroMemory(&client, clientLength);
+//        ZeroMemory(buf, 1024);
+//        int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
+//        if (bytesIn == SOCKET_ERROR)
+//        {
+//            std::cout << "Error receiving from client " << WSAGetLastError() << "\n";
+//            continue;
+//        }
+//        char clientIp[256];
+//        ZeroMemory(clientIp, 256);
+//        inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
+//        std::cout << "Message recv from " << clientIp << " : " << buf << "\n";
+//        char computerName[100]{ 0 };
+//        gethostname(computerName, 100);
+//        sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
+//    }
+//    closesocket(in);
+//    std::cout << "shut down broadcast socket.\n";
+//}
 
 void sendScreenResolution(SOCKET acceptSocket, int width, int height) {
     std::string widthStr = std::to_string(width);

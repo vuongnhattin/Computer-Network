@@ -19,6 +19,13 @@ enum class ConnectionState {
 	NOT_YET,
 	WAITING,
 	CONNECTED,
+}; 
+
+enum class DiscoveryState
+{
+	NOT_YET,
+	DISCOVERING,
+	DISCOVERED,
 };
 
 void initUI();

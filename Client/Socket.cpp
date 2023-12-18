@@ -4,6 +4,7 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include "main.h"
+#include "UI.h"
 
 bool initClientSocket(SOCKET& clientSocket, char* ip, const int port) {
 	WSAData data;
