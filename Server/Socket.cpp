@@ -130,7 +130,7 @@ void broadcastS() {
     int clientLength = sizeof(client);
     char subnetMask[16];
     std::cout << "waiting for name req from client broadcast.\n";
-    while (discoveryState != DiscoveryState::SUCCESS)
+    while (connectionState != ConnectionState::CONNECTED)
     {
         ZeroMemory(&client, clientLength);
         ZeroMemory(subnetMask, 16);
@@ -147,7 +147,8 @@ void broadcastS() {
         char computerName[100]{ 0 };
         gethostname(computerName, 100);
 
-        sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
+        int bytes = sendto(in, computerName, strlen(computerName) + 1, 0, (sockaddr*)&client, clientLength);
+        std::cout << "Bytes sent: " << bytes << "\n";
 
         struct hostent* phe = gethostbyname(computerName);
 
