@@ -57,8 +57,6 @@ void broadcastS() {
                 std::cout << "IP recv from " << clientIp << " : " << buf << "\n";
                 memcpy(ip, buf, 16);
                 discoveryState = DiscoveryState::DISCOVERED;
-                closesocket(in);
-                return;
             }
         }
     }
