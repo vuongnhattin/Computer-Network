@@ -10,59 +10,7 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #pragma comment (lib, "ws2_32.lib")
-void broadcastS() {
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
-    sockaddr_in serverHint;
-    ZeroMemory(&serverHint, sizeof(serverHint));
-    serverHint.sin_addr.S_un.S_addr = ADDR_ANY;
-    serverHint.sin_family = AF_INET;
-    serverHint.sin_port = htons(broadcastPort);
-    if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
-    {
-        std::cout << "Can't bind socket! " << WSAGetLastError() << "\n";
-        return;
-    }
-    std::cout << "bind broadcast socket successfully\n";
-    sockaddr_in client;
-    int clientLength = sizeof(client);
-    char buf[1024];
-    std::cout << "waiting for name req from client broadcast.\n";
-    while (uiState == UIState::DISPLAY_CONNECTION_MENU)
-    {
-        ZeroMemory(&client, clientLength);
-        ZeroMemory(buf, 1024);
-        int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
-        if (bytesIn == SOCKET_ERROR)
-        {
-            //std::cout << "Error receiving from client " << WSAGetLastError() << "\n";
-            continue;
-        }
-        char clientIp[256];
-        ZeroMemory(clientIp, 256);
-        inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
-        //std::cout << "Message recv from " << clientIp << " : " << buf << "\n";
-        char computerName[100]{ 0 };
-        gethostname(computerName, 100);
-        std::string computerStr(computerName);
-        /*if (bindingState != BindingState::BOUND) {
-            computerStr += " not bind";
-        }*/
-        ZeroMemory(buf, 1024);
-        sendto(in, computerStr.c_str(), computerStr.size() + 1, 0, (sockaddr*)&client, clientLength);
-        sockaddr_in foo;
-        if (recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength) != SOCKET_ERROR) {
-            if (inet_pton(AF_INET, buf, &foo.sin_addr.s_addr) == 1) {
-                std::cout << "IP recv from " << clientIp << " : " << buf << "\n";
-                memcpy(ip, buf, 16);
-                discoveryState = DiscoveryState::DISCOVERED;
-            }
-        }
-    }
-    closesocket(in);
-    std::cout << "shut down broadcast socket.\n";
-}
+
 void initUI() {
     const double scale = 0.4;
     int appWidth = screenWidth * scale, appHeight = screenHeight * scale;
@@ -98,11 +46,6 @@ void waitingForConnection(SOCKET& serverSocket, SOCKET& acceptSocket) {
 }
 
 void displayConnectMenu() {
-    if (discoveryState == DiscoveryState::NOT_YET) {
-        discoveryState = DiscoveryState::DISCOVERING;
-        std::thread broadcast(broadcastS);
-        broadcast.detach();
-    }
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
@@ -110,17 +53,38 @@ void displayConnectMenu() {
     ImGui::SetNextWindowSize(ImVec2(screenRect.w, screenRect.h));
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     if (ImGui::Begin("Initialize server", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse)) {
-        ImGui::Text("Waiting for client connect...");
-        if (discoveryState == DiscoveryState::DISCOVERED) {
-            connectionState = ConnectionState::WAITING;
-            bindSocket(imageSocket, ip, imagePort);
-            std::thread waitingForConnectionThread(waitingForConnection, std::ref(imageSocket), std::ref(acceptImageSocket));
-            waitingForConnectionThread.detach();
-            discoveryState = DiscoveryState::DISCOVERING;
-            //std::thread broadcast(broadcastS);
-            //broadcast.detach();
+        ImGui::Text("Server's IP Address");
+        ImGui::InputText("##IP", ip, IM_ARRAYSIZE(ip));
+        if (ImGui::Button("Initialize")) {
+            if (bindSocket(imageSocket, ip, imagePort)) {
+                bindingState = BindingState::BOUND;
+            }
+            else {
+                bindingState = BindingState::FAILED;
+            }
         }
 
+        if (bindingState == BindingState::FAILED) {
+            ImGui::Separator();
+            ImGui::Text("Initialize failed!");
+        }
+
+        if (bindingState == BindingState::BOUND) {
+            
+            ImGui::Separator(); 
+
+            ImGui::Text("Initialize success!");
+            ImGui::Text("Waiting for client...");
+
+            if (connectionState == ConnectionState::NOT_YET) {
+                connectionState = ConnectionState::WAITING;
+                std::thread waitingForConnectionThread(waitingForConnection, std::ref(imageSocket), std::ref(acceptImageSocket));
+                waitingForConnectionThread.detach();
+
+                std::thread broadcastThread(broadcastS);
+                broadcastThread.detach();
+            }
+        }
         ImGui::Separator();
         if (ImGui::Button("Exit")) {
             uiState = UIState::QUIT;
@@ -135,7 +99,6 @@ void displayConnectMenu() {
 
     SDL_RenderPresent(renderer);
 }
-
 
 void displayControlPanel() {
     ImGui_ImplSDLRenderer2_NewFrame();
