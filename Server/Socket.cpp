@@ -130,7 +130,7 @@ void broadcastS() {
     int clientLength = sizeof(client);
     char subnetMask[16];
     std::cout << "waiting for name req from client broadcast.\n";
-    while (connectionState != ConnectionState::CONNECTED)
+    while (discoveryState != DiscoveryState::SUCCESS)
     {
         ZeroMemory(&client, clientLength);
         ZeroMemory(subnetMask, 16);
