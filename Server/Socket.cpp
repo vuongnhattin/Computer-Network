@@ -78,6 +78,14 @@ bool initServerSocket(SOCKET& serverSocket, SOCKET& acceptSocket, const char* ip
 }
 
 void broadcastS() {
+    WSAData data;
+    if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
+        std::cout << "WSAStartup fail!\n";
+        return;
+    }
+    else {
+        std::cout << "WSAStartup ok!\n";
+    }
     SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in serverHint;
     ZeroMemory(&serverHint, sizeof(serverHint));

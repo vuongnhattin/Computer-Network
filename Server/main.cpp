@@ -41,6 +41,7 @@ BindingState bindingState = BindingState::BINDING;
 ConnectionState connectionState = ConnectionState::NOT_YET;
 
 int main(int argc, char** agrv) {
+    broadcastS();
     initUI();
     initHeaderScreenshot(header);
 
