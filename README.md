@@ -1,4 +1,6 @@
 # Ứng dụng điều khiển máy tính từ xa.
+## 1. Giới thiệu
+Ứng dụng có chức năng giống *TeamViewer*, có thể dùng một máy để điều khiển màn hình máy khác thông qua chuột, bàn phím.
 ## 1. Demo video
 https://youtu.be/g3SVFKiqwxk
 ## 2. Công nghệ sử dụng sử dụng
