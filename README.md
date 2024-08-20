@@ -10,3 +10,4 @@ https://youtu.be/g3SVFKiqwxk
 - **WinSock2** để thiết lập socket phục vụ cho truyền, nhận ảnh.
 ## 3. Chức năng
 - Server chọn một máy client đã kết nối vào mạng LAN để thiết lập kết nối.
+- còn tiếp....
