@@ -9,5 +9,4 @@ https://youtu.be/g3SVFKiqwxk
 - **OpenCV** để xử lý ảnh (nén, giải nén,...).
 - **WinSock2** để thiết lập socket phục vụ cho truyền, nhận ảnh.
 ## 4. Chức năng
-- Server chọn một máy client đã kết nối vào mạng LAN để thiết lập kết nối.
-- còn tiếp....
+- Như trong video
