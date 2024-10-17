@@ -8,5 +8,6 @@ https://youtu.be/g3SVFKiqwxk
 - **SDL2** và **DearImGui** cho giao diện.
 - **OpenCV** để xử lý ảnh (nén, giải nén,...).
 - **WinSock2** để thiết lập socket phục vụ cho truyền, nhận ảnh.
+- Dùng multi-threading để xử lý tín hiệu ảnh, chuột, bàn phím song song.
 ## 4. Chức năng
-- Như trong video
+- Như trong video demo.
